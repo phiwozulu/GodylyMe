@@ -269,6 +269,17 @@ export default function Profile() {
     return savedClips
   }, [tab, clips, likedClips, savedClips])
 
+  const watchState = React.useMemo(
+    () => ({
+      context: {
+        type: 'profile' as const,
+        ids: gridSource.map((clip) => clip.id),
+        authorId: targetId,
+      },
+    }),
+    [gridSource, targetId]
+  )
+
   const fallbackFollowingCount = isSelf ? followingEntries.length : 0
   const fallbackFollowerCount = isSelf ? followersEntries.length : 0
   const followingCount = followStats?.following ?? fallbackFollowingCount
@@ -314,10 +325,10 @@ export default function Profile() {
   }, [canMessageTarget, navigate, targetHandle])
 
   const handleGridKey = React.useCallback(
-    (event: React.KeyboardEvent<HTMLDivElement>, clipId: string) => {
+    (event: React.KeyboardEvent<HTMLDivElement>, clipId: string, state?: { context: unknown }) => {
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault()
-        navigate(`/watch/${clipId}`)
+        navigate(`/watch/${clipId}`, { state })
       }
     },
     [navigate]
@@ -488,8 +499,8 @@ export default function Profile() {
                 role="button"
                 tabIndex={0}
                 className={styles.gridItem}
-                onClick={() => navigate(`/watch/${clip.id}`)}
-                onKeyDown={(event) => handleGridKey(event, clip.id)}
+                onClick={() => navigate(`/watch/${clip.id}`, { state: watchState })}
+                onKeyDown={(event) => handleGridKey(event, clip.id, watchState)}
                 aria-label={`Open ${clip.title}`}
               >
                 <img

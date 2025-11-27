@@ -284,7 +284,18 @@ export default function Home() {
                         </div>
                         {searchResults.videos.length ? (
                           searchResults.videos.slice(0, 5).map((clip) => (
-                            <Link key={clip.id} to={`/watch/${clip.id}`} className={styles.resultItem}>
+                          <Link
+                            key={clip.id}
+                            to={`/watch/${clip.id}`}
+                            state={{
+                              context: {
+                                type: 'search',
+                                ids: searchResults.videos.map((video) => video.id),
+                                query: searchValue,
+                              },
+                            }}
+                            className={styles.resultItem}
+                          >
                               <div className={styles.resultMeta}>
                                 <strong>{clip.title}</strong>
                                 <span>{clip.user.name}</span>

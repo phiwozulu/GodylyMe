@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import {
   contentService,
   type Video,
@@ -22,11 +22,22 @@ import {
 } from '../shared/icons'
 import styles from './Watch.module.css'
 
+type WatchContext =
+  | { type: 'profile'; ids?: string[]; authorId?: string }
+  | { type: 'search'; ids?: string[]; query?: string }
+
 export default function Watch() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const [clip, setClip] = useState<Video | undefined>(undefined)
+  const location = useLocation()
+  const watchContext = (location.state as { context?: WatchContext } | undefined)?.context
+  const [clip, setClip] = useState<Video | undefined>(() => (id ? contentService.getClipById(id) : undefined))
+  const [queue, setQueue] = useState<Video[]>([])
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [transitionDirection, setTransitionDirection] = useState<'next' | 'prev'>('next')
+  const [animationKey, setAnimationKey] = useState(0)
   const videoRef = React.useRef<HTMLVideoElement | null>(null)
+  const containerRef = React.useRef<HTMLDivElement | null>(null)
   const [comments, setComments] = useState<VideoComment[]>([])
   const [loadingComments, setLoadingComments] = useState(true)
   const [commentsError, setCommentsError] = useState<string | null>(null)
@@ -42,14 +53,84 @@ export default function Watch() {
   }, [clip])
 
   useEffect(() => {
-    if (!id) return
-    const video = contentService.getClipById(id)
-    setClip(video)
+    let cancelled = false
+
+    async function hydrateQueue() {
+      const activeClip = id ? contentService.getClipById(id) : undefined
+      const context = watchContext
+      let nextQueue: Video[] = []
+
+      if (context?.type === 'profile') {
+        const ids = context.ids || []
+        nextQueue = ids.map((clipId) => contentService.getClipById(clipId)).filter(Boolean) as Video[]
+        if (!nextQueue.length && context.authorId) {
+          nextQueue = contentService.getClipsByAuthor(context.authorId)
+        }
+      } else if (context?.type === 'search') {
+        const ids = context.ids || []
+        nextQueue = ids.map((clipId) => contentService.getClipById(clipId)).filter(Boolean) as Video[]
+        if (!nextQueue.length && context.query) {
+          try {
+            const results = await contentService.search(context.query, 30)
+            const searchIds = results.videos.map((video) => video.id)
+            nextQueue = searchIds.map((clipId) => contentService.getClipById(clipId)).filter(Boolean) as Video[]
+            if (!nextQueue.length && results.videos?.length) {
+              nextQueue = results.videos as Video[]
+            }
+          } catch {
+            // fall back to whatever is already in the library
+          }
+        }
+      }
+
+      if (!context && activeClip) {
+        const authorId = activeClip.user.handle || activeClip.user.id || ''
+        const authorClips = authorId ? contentService.getClipsByAuthor(authorId) : []
+        if (authorClips.length) {
+          nextQueue = authorClips
+        }
+      }
+
+      if (activeClip && !nextQueue.some((item) => item.id === activeClip.id)) {
+        nextQueue = [activeClip, ...nextQueue]
+      }
+
+      if (!nextQueue.length && activeClip) {
+        nextQueue = [activeClip]
+      }
+
+      const deduped = nextQueue.filter(
+        (item, index, array) => array.findIndex((candidate) => candidate.id === item.id) === index
+      )
+
+      if (!cancelled) {
+        setQueue(deduped)
+        const matchIndex = activeClip ? deduped.findIndex((item) => item.id === activeClip.id) : 0
+      setCurrentIndex(matchIndex >= 0 ? matchIndex : 0)
+      setClip(activeClip ?? deduped[0])
+      setTransitionDirection('next')
+      setAnimationKey((value) => value + 1)
+    }
+  }
+
+    void hydrateQueue()
+
+    return () => {
+      cancelled = true
+    }
+  }, [id, watchContext])
+
+  useEffect(() => {
+    const clipId = clip?.id
+    if (!clipId) return
     let cancelled = false
     setLoadingComments(true)
     setCommentsError(null)
+    setComments([])
+    setShowComments(false)
+    setText('')
     contentService
-      .fetchClipComments(id)
+      .fetchClipComments(clipId)
       .then((list) => {
         if (!cancelled) {
           setComments(list)
@@ -69,7 +150,7 @@ export default function Watch() {
     return () => {
       cancelled = true
     }
-  }, [id])
+  }, [clip?.id])
 
   useEffect(() => {
     setMuted(true)
@@ -97,6 +178,56 @@ export default function Watch() {
     }
   }, [muted, isPlaying])
 
+  const goToIndex = React.useCallback(
+    (nextIndex: number) => {
+      if (nextIndex < 0 || nextIndex >= queue.length) return
+      const nextClip = queue[nextIndex]
+      const direction = nextIndex > currentIndex ? 'next' : 'prev'
+      setTransitionDirection(direction)
+      setAnimationKey((value) => value + 1)
+      setCurrentIndex(nextIndex)
+      setClip(nextClip)
+      setComments([])
+      setCommentsError(null)
+      setShowComments(false)
+      setText('')
+      navigate(`/watch/${nextClip.id}`, { replace: true, state: { context: watchContext } })
+    },
+    [navigate, queue, watchContext]
+  )
+
+  useEffect(() => {
+    if (!queue.length) return
+    const handleWheel = (event: WheelEvent) => {
+      if (Math.abs(event.deltaY) < 24 || queue.length <= 1) return
+      event.preventDefault()
+      if (event.deltaY > 0) {
+        goToIndex(currentIndex + 1)
+      } else {
+        goToIndex(currentIndex - 1)
+      }
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowDown' || event.key === 'PageDown') {
+        event.preventDefault()
+        goToIndex(currentIndex + 1)
+      } else if (event.key === 'ArrowUp' || event.key === 'PageUp') {
+        event.preventDefault()
+        goToIndex(currentIndex - 1)
+      }
+    }
+
+    const target = containerRef.current || window
+    target.addEventListener('wheel', handleWheel, { passive: false })
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      target.removeEventListener('wheel', handleWheel as EventListener)
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [queue.length, currentIndex, goToIndex])
+
   if (!clip) {
     return <div className={styles.missing}>We couldn't find that Vessel moment.</div>
   }
@@ -105,10 +236,11 @@ export default function Watch() {
   const isBookmarked = contentService.isBookmarked(clip.id)
 
   async function addComment() {
-    if (!id || !text.trim() || commentBusy) return
+    const targetId = clip?.id
+    if (!targetId || !text.trim() || commentBusy) return
     setCommentBusy(true)
     try {
-      const comment = await contentService.recordComment(id, text.trim())
+      const comment = await contentService.recordComment(targetId, text.trim())
       setComments((prev) => [comment, ...prev])
       setText('')
     } catch (error) {
@@ -246,8 +378,13 @@ export default function Watch() {
   ]
 
   return (
-    <div className={styles.watch}>
-      <div className={styles.viewer}>
+    <div className={styles.watch} ref={containerRef}>
+      <div
+        key={`${clip.id}-${animationKey}`}
+        className={`${styles.viewer} ${
+          transitionDirection === 'prev' ? styles.viewerSlidePrev : styles.viewerSlideNext
+        }`}
+      >
         <video
           ref={videoRef}
           className={styles.player}
