@@ -3,7 +3,7 @@
   min-height: calc(100vh - var(--bottom-nav-height));
   width: 100%;
   overflow: hidden;
-  background: radial-gradient(circle at 20% 20%, #f3ede1 0%, #e7ddc8 40%, #c9bca2 100%);
+  background: #f0ece5;
   display: flex;
   justify-content: center;
   padding: 1rem 0 0;
