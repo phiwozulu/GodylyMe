@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { ZodSchema } from 'zod'
 
-export type Handler = (req: VercelRequest, res: VercelResponse) => Promise<void>
+export type Handler = (req: VercelRequest, res: VercelResponse) => Promise<void | VercelResponse>
 
 export function cors(handler: Handler): Handler {
   return async (req: VercelRequest, res: VercelResponse) => {
@@ -23,7 +23,7 @@ export function cors(handler: Handler): Handler {
 }
 
 export function validateBody<T>(schema: ZodSchema<T>) {
-  return (handler: (req: VercelRequest, res: VercelResponse, body: T) => Promise<void>): Handler => {
+  return (handler: (req: VercelRequest, res: VercelResponse, body: T) => Promise<void | VercelResponse>): Handler => {
     return async (req: VercelRequest, res: VercelResponse) => {
       try {
         const body = schema.parse(req.body)

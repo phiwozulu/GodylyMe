@@ -6,8 +6,8 @@ import {
   findUserByEmail,
   findUserByHandle,
   presentUser,
-} from '../../backend/src/services/userService'
-import { buildVerificationEmail, sendEmail } from '../../backend/src/services/emailService'
+} from '../../vessel-app/backend/src/services/userService'
+import { buildVerificationEmail, sendEmail } from '../../vessel-app/backend/src/services/emailService'
 
 const signupSchema = z.object({
   name: z.string().min(2).max(120),
@@ -49,7 +49,7 @@ async function handler(req: VercelRequest, res: VercelResponse, payload: z.infer
 
   if (user.verification_token) {
     const emailPayload = buildVerificationEmail(user.email, user.verification_token)
-    sendEmail(emailPayload).catch((err) => {
+    sendEmail(emailPayload).catch((err: unknown) => {
       console.error('Failed to send verification email', err)
     })
   }

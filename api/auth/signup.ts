@@ -49,7 +49,7 @@ async function handler(req: VercelRequest, res: VercelResponse, payload: z.infer
 
   if (user.verification_token) {
     const emailPayload = buildVerificationEmail(user.email, user.verification_token)
-    sendEmail(emailPayload).catch((err) => {
+    sendEmail(emailPayload).catch((err: unknown) => {
       console.error('Failed to send verification email', err)
     })
   }
