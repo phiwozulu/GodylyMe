@@ -7,7 +7,7 @@ import {
   findUserByEmail,
   presentUser,
   type DbUser,
-} from '../../backend/src/services/userService'
+} from '../../vessel-app/backend/src/services/userService'
 
 const loginSchema = z.object({
   email: z.string().email(),

@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { z } from 'zod'
 import * as jwt from 'jsonwebtoken'
 import { compose, cors, errorHandler, validateBody } from '../_lib/serverless'
-import { resetPasswordWithToken, presentUser, type DbUser } from '../../backend/src/services/userService'
+import { resetPasswordWithToken, presentUser, type DbUser } from '../../vessel-app/backend/src/services/userService'
 
 const resetPasswordSchema = z.object({
   token: z.string().min(10),

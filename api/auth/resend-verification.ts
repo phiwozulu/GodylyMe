@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { z } from 'zod'
 import { compose, cors, errorHandler, validateBody } from '../_lib/serverless'
-import { findUserByEmail, updateVerificationCode } from '../../backend/src/services/userService'
-import { buildVerificationEmail, sendEmail } from '../../backend/src/services/emailService'
+import { findUserByEmail, updateVerificationCode } from '../../vessel-app/backend/src/services/userService'
+import { buildVerificationEmail, sendEmail } from '../../vessel-app/backend/src/services/emailService'
 
 const resendSchema = z.object({
   email: z.string().email(),

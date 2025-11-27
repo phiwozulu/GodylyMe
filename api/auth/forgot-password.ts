@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { z } from 'zod'
 import { compose, cors, errorHandler, validateBody } from '../_lib/serverless'
-import { createPasswordResetToken } from '../../backend/src/services/userService'
-import { buildPasswordResetEmail, sendEmail } from '../../backend/src/services/emailService'
+import { createPasswordResetToken } from '../../vessel-app/backend/src/services/userService'
+import { buildPasswordResetEmail, sendEmail } from '../../vessel-app/backend/src/services/emailService'
 
 const forgotPasswordSchema = z.object({
   email: z.string().email(),
