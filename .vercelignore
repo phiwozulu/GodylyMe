@@ -1,0 +1,46 @@
+# Dependencies
+node_modules
+vessel-app/node_modules
+vessel-app/backend/node_modules
+vessel-app/api/node_modules
+vessel-app/frontend/node_modules
+
+# Build outputs
+vessel-app/backend/build
+vessel-app/api/dist
+.vercel
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+vessel-app/backend/.env
+vessel-app/backend/.env.local
+vessel-app/frontend/.env.local
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+coverage
+
+# Misc
+.git
+.gitignore
+README.md

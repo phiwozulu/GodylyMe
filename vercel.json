@@ -1,0 +1,20 @@
+{
+  "buildCommand": "cd vessel-app/frontend && npm run build",
+  "outputDirectory": "vessel-app/frontend/dist",
+  "installCommand": "cd vessel-app && npm install && cd api && npm install && cd ../frontend && npm install",
+  "functions": {
+    "vessel-app/api/**/*.ts": {
+      "maxDuration": 10
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/vessel-app/api/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/$1"
+    }
+  ]
+}
