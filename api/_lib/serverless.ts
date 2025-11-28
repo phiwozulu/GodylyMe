@@ -65,3 +65,6 @@ export function compose(...handlers: ((h: Handler) => Handler)[]): (h: Handler) 
     return handlers.reduceRight((acc, fn) => fn(acc), handler)
   }
 }
+
+// Re-export requireAuth from authMiddleware
+export { requireAuth } from './authMiddleware'
