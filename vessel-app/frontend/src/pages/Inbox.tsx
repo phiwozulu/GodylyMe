@@ -933,32 +933,34 @@ export default function Inbox() {
 
   return (
     <div className={styles.inbox}>
-      <header className={styles.hero}>
-        <h1>Inbox</h1>
-        <p>Track your notifications, donations, and messages in one place.</p>
-      </header>
+      <div className={styles.inboxCard}>
+        <header className={styles.hero}>
+          <h1>Inbox</h1>
+          <p>Track your notifications, donations, and messages in one place.</p>
+        </header>
 
-      <div className={styles.tabBar}>
-        <button
-          type="button"
-          className={tab === 'notifications' ? styles.tabActive : styles.tab}
-          onClick={() => setTab('notifications')}
-        >
-          Notifications
-        </button>
-        <button type="button" className={tab === 'messages' ? styles.tabActive : styles.tab} onClick={() => setTab('messages')}>
-          Messages
-        </button>
-        <button
-          type="button"
-          className={tab === 'suggested' ? styles.tabActive : styles.tab}
-          onClick={() => setTab('suggested')}
-        >
-          Suggested
-        </button>
+        <div className={styles.tabBar}>
+          <button
+            type="button"
+            className={tab === 'notifications' ? styles.tabActive : styles.tab}
+            onClick={() => setTab('notifications')}
+          >
+            Notifications
+          </button>
+          <button type="button" className={tab === 'messages' ? styles.tabActive : styles.tab} onClick={() => setTab('messages')}>
+            Messages
+          </button>
+          <button
+            type="button"
+            className={tab === 'suggested' ? styles.tabActive : styles.tab}
+            onClick={() => setTab('suggested')}
+          >
+            Suggested
+          </button>
+        </div>
+
+        <section className={styles.panel}>{tabContent}</section>
       </div>
-
-      <section className={styles.panel}>{tabContent}</section>
       {authMode ? (
         <AuthOverlay
           mode={authMode}

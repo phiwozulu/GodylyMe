@@ -52,7 +52,7 @@ export default function Feed() {
     setSearchResults(null)
     setShowResults(false)
     setSearchLoading(false)
-    inputRef.current?.focus()
+    requestAnimationFrame(() => inputRef.current?.focus())
   }, [])
 
   async function performSearch(q?: string) {
@@ -159,10 +159,17 @@ export default function Feed() {
                 ref={inputRef}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={'Search creators, testimonies, prayer topics, or verses �?" start with @ for handles'}
+                onFocus={() => {
+                  if (!searchOpen) {
+                    setSearchOpen(true)
+                  }
+                }}
+                placeholder="Search creators, testimonies, prayer topics, or verses — start with @ for handles"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
+                    e.preventDefault()
                     void performSearch()
+                    requestAnimationFrame(() => inputRef.current?.focus())
                   } else if (e.key === 'Escape') {
                     setSearchOpen(false)
                     setShowResults(false)

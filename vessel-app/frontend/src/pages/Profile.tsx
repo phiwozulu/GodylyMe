@@ -373,196 +373,198 @@ export default function Profile() {
 
   return (
     <div className={styles.profile}>
-      <header className={styles.topBar}>
-        <div />
-        <button
-          type="button"
-          className={styles.headerButton}
-          onClick={headerAction.onClick}
-          aria-label={headerAction.label}
-        >
-          <span aria-hidden="true">{headerAction.icon}</span>
-        </button>
-      </header>
+      <div className={styles.profileCard}>
+        <header className={styles.topBar}>
+          <div />
+          <button
+            type="button"
+            className={styles.headerButton}
+            onClick={headerAction.onClick}
+            aria-label={headerAction.label}
+          >
+            <span aria-hidden="true">{headerAction.icon}</span>
+          </button>
+        </header>
 
-      <section className={styles.hero}>
-        <div className={styles.banner}>
-          <div className={styles.avatar}>
-            {avatarPhoto ? <img src={avatarPhoto} alt={`${displayName} avatar`} /> : avatarLetter}
+        <section className={styles.hero}>
+          <div className={styles.banner}>
+            <div className={styles.avatar}>
+              {avatarPhoto ? <img src={avatarPhoto} alt={`${displayName} avatar`} /> : avatarLetter}
+            </div>
           </div>
-        </div>
-        <div className={styles.bio}>
-          <span className={styles.handle}>{profileHandle}</span>
-          <h1 className={styles.displayName}>{displayName}</h1>
-          {church ? <p className={styles.church}>{church}</p> : null}
-        </div>
-        <div className={styles.statsRow}>
-          <Stat
-            label="Following"
-            value={followingCount.toLocaleString()}
-            onClick={canShowFollowLists && followingCount ? () => setShowFollowingList(true) : undefined}
-            disabled={!canShowFollowLists || !followingCount}
-          />
-          <Stat
-            label="Followers"
-            value={followerCount.toLocaleString()}
-            onClick={canShowFollowLists && followerCount ? () => setShowFollowersList(true) : undefined}
-            disabled={!canShowFollowLists || !followerCount}
-          />
-          <Stat label="Likes" value={formatLikes(totalLikes)} />
-          {isSelf ? <Stat label="Saved" value={savedCount.toLocaleString()} /> : null}
-        </div>
-        <div className={styles.actions}>
-          {isGuest ? (
-            <>
-              <button
-                className={`${styles.actionButton} ${styles.primaryAction}`}
-                onClick={() => openSettings("signup")}
-              >
-                Create profile
-              </button>
-              <button className={styles.actionButton} onClick={() => openSettings("login")}>
-                Sign in
-              </button>
-            </>
-          ) : isSelf ? (
-            <>
-              <button className={`${styles.actionButton} ${styles.primaryAction}`} onClick={() => navigate('/upload')}>
-                Upload
-              </button>
-              <button className={styles.actionButton} onClick={() => openSettings("signup")}>
-                Edit profile
-              </button>
-              <button className={styles.actionButton} onClick={copyProfileLink}>
-                Share
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                className={`${styles.actionButton} ${styles.primaryAction}`}
-                onClick={handleFollowToggle}
-                disabled={followBusy}
-                aria-busy={followBusy}
-              >
-                {followBusy ? (isFollowing ? 'Unfollowing...' : 'Following...') : isFollowing ? 'Following' : 'Follow'}
-              </button>
-              <button
-                className={styles.actionButton}
-                onClick={handleMessageClick}
-                disabled={!canMessageTarget}
-                title={canMessageTarget ? 'Send a message' : 'Follow this creator to start messaging'}
-              >
-                Message
-              </button>
-              <button className={styles.actionButton} onClick={copyProfileLink}>
-                Share
-              </button>
-            </>
-          )}
-        </div>
-      </section>
+          <div className={styles.bio}>
+            <span className={styles.handle}>{profileHandle}</span>
+            <h1 className={styles.displayName}>{displayName}</h1>
+            {church ? <p className={styles.church}>{church}</p> : null}
+          </div>
+          <div className={styles.statsRow}>
+            <Stat
+              label="Following"
+              value={followingCount.toLocaleString()}
+              onClick={canShowFollowLists && followingCount ? () => setShowFollowingList(true) : undefined}
+              disabled={!canShowFollowLists || !followingCount}
+            />
+            <Stat
+              label="Followers"
+              value={followerCount.toLocaleString()}
+              onClick={canShowFollowLists && followerCount ? () => setShowFollowersList(true) : undefined}
+              disabled={!canShowFollowLists || !followerCount}
+            />
+            <Stat label="Likes" value={formatLikes(totalLikes)} />
+            {isSelf ? <Stat label="Saved" value={savedCount.toLocaleString()} /> : null}
+          </div>
+          <div className={styles.actions}>
+            {isGuest ? (
+              <>
+                <button
+                  className={`${styles.actionButton} ${styles.primaryAction}`}
+                  onClick={() => openSettings("signup")}
+                >
+                  Create profile
+                </button>
+                <button className={styles.actionButton} onClick={() => openSettings("login")}>
+                  Sign in
+                </button>
+              </>
+            ) : isSelf ? (
+              <>
+                <button className={`${styles.actionButton} ${styles.primaryAction}`} onClick={() => navigate('/upload')}>
+                  Upload
+                </button>
+                <button className={styles.actionButton} onClick={() => openSettings("signup")}>
+                  Edit profile
+                </button>
+                <button className={styles.actionButton} onClick={copyProfileLink}>
+                  Share
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  className={`${styles.actionButton} ${styles.primaryAction}`}
+                  onClick={handleFollowToggle}
+                  disabled={followBusy}
+                  aria-busy={followBusy}
+                >
+                  {followBusy ? (isFollowing ? 'Unfollowing...' : 'Following...') : isFollowing ? 'Following' : 'Follow'}
+                </button>
+                <button
+                  className={styles.actionButton}
+                  onClick={handleMessageClick}
+                  disabled={!canMessageTarget}
+                  title={canMessageTarget ? 'Send a message' : 'Follow this creator to start messaging'}
+                >
+                  Message
+                </button>
+                <button className={styles.actionButton} onClick={copyProfileLink}>
+                  Share
+                </button>
+              </>
+            )}
+          </div>
+        </section>
 
-      <section className={styles.gridSection}>
-        <div className={styles.tabBar}>
-          <button
-            type="button"
-            className={tab === 'videos' ? styles.tabActive : styles.tabButton}
-            onClick={() => setTab('videos')}
-          >
-            Videos
-          </button>
-          <button
-            type="button"
-            className={tab === 'liked' ? styles.tabActive : styles.tabButton}
-            onClick={() => setTab('liked')}
-          >
-            Liked
-          </button>
-          {isSelf ? (
+        <section className={styles.gridSection}>
+          <div className={styles.tabBar}>
             <button
               type="button"
-              className={tab === 'saved' ? styles.tabActive : styles.tabButton}
-              onClick={() => setTab('saved')}
+              className={tab === 'videos' ? styles.tabActive : styles.tabButton}
+              onClick={() => setTab('videos')}
             >
-              Saved
+              Videos
             </button>
-          ) : null}
-        </div>
-        <div className={`${styles.gridContent} ${tab === 'videos' ? styles.gridContentVideos : ''}`}>
-          {gridSource.map((clip) => {
-            const allowDelete = isSelf && tab === 'videos'
-            const allowUnsave = isSelf && tab === 'saved'
-            return (
-              <div
-                key={`${tab}-${clip.id}`}
-                role="button"
-                tabIndex={0}
-                className={styles.gridItem}
-                onClick={() => navigate(`/watch/${clip.id}`, { state: watchState })}
-                onKeyDown={(event) => handleGridKey(event, clip.id, watchState)}
-                aria-label={`Open ${clip.title}`}
+            <button
+              type="button"
+              className={tab === 'liked' ? styles.tabActive : styles.tabButton}
+              onClick={() => setTab('liked')}
+            >
+              Liked
+            </button>
+            {isSelf ? (
+              <button
+                type="button"
+                className={tab === 'saved' ? styles.tabActive : styles.tabButton}
+                onClick={() => setTab('saved')}
               >
-                <img
-                  className={styles.gridThumb}
-                  src={clip.thumbnailUrl || THUMBNAIL_PLACEHOLDER}
-                  alt={clip.title}
-                  loading="lazy"
-                />
-                <div className={styles.gridOverlay}>
-                  <span>Likes: {formatLikes(clip.likes)}</span>
-                </div>
-                {allowDelete || allowUnsave ? (
-                  <div className={styles.gridActions}>
-                    {allowDelete ? (
-                      <button
-                        type="button"
-                        className={styles.gridActionButton}
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          handleDeleteClip(clip)
-                        }}
-                      >
-                        Delete
-                      </button>
-                    ) : null}
-                    {allowUnsave ? (
-                      <button
-                        type="button"
-                        className={styles.gridActionButton}
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          handleRemoveSavedClip(clip)
-                        }}
-                      >
-                        Unsave
-                      </button>
-                    ) : null}
+                Saved
+              </button>
+            ) : null}
+          </div>
+          <div className={`${styles.gridContent} ${tab === 'videos' ? styles.gridContentVideos : ''}`}>
+            {gridSource.map((clip) => {
+              const allowDelete = isSelf && tab === 'videos'
+              const allowUnsave = isSelf && tab === 'saved'
+              return (
+                <div
+                  key={`${tab}-${clip.id}`}
+                  role="button"
+                  tabIndex={0}
+                  className={styles.gridItem}
+                  onClick={() => navigate(`/watch/${clip.id}`, { state: watchState })}
+                  onKeyDown={(event) => handleGridKey(event, clip.id, watchState)}
+                  aria-label={`Open ${clip.title}`}
+                >
+                  <img
+                    className={styles.gridThumb}
+                    src={clip.thumbnailUrl || THUMBNAIL_PLACEHOLDER}
+                    alt={clip.title}
+                    loading="lazy"
+                  />
+                  <div className={styles.gridOverlay}>
+                    <span>Likes: {formatLikes(clip.likes)}</span>
                   </div>
-                ) : null}
+                  {allowDelete || allowUnsave ? (
+                    <div className={styles.gridActions}>
+                      {allowDelete ? (
+                        <button
+                          type="button"
+                          className={styles.gridActionButton}
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            handleDeleteClip(clip)
+                          }}
+                        >
+                          Delete
+                        </button>
+                      ) : null}
+                      {allowUnsave ? (
+                        <button
+                          type="button"
+                          className={styles.gridActionButton}
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            handleRemoveSavedClip(clip)
+                          }}
+                        >
+                          Unsave
+                        </button>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+              )
+            })}
+            {tab === 'videos' && !clips.length ? (
+              <div className={styles.emptyVideos}>
+                <h3>No videos yet</h3>
+                <p>When this creator uploads, their moments will appear here.</p>
               </div>
-            )
-          })}
-          {tab === 'videos' && !clips.length ? (
-            <div className={styles.emptyVideos}>
-              <h3>No videos yet</h3>
-              <p>When this creator uploads, their moments will appear here.</p>
-            </div>
-          ) : null}
-          {tab === 'liked' && !likedClips.length ? (
-            <div className={styles.emptyLiked}>
-              <h3>No liked videos yet</h3>
-              <p>Videos you like will appear here. Explore the feed and tap the heart to save your favourites.</p>
-            </div>
-          ) : null}
-          {tab === 'saved' && !savedClips.length ? (
-            <div className={styles.emptyLiked}>
-              <h3>No saved videos yet</h3>
-              <p>Tap Save on any Godly Me moment to keep it close for future encouragement.</p>
-            </div>
-          ) : null}
-        </div>
-      </section>
+            ) : null}
+            {tab === 'liked' && !likedClips.length ? (
+              <div className={styles.emptyLiked}>
+                <h3>No liked videos yet</h3>
+                <p>Videos you like will appear here. Explore the feed and tap the heart to save your favourites.</p>
+              </div>
+            ) : null}
+            {tab === 'saved' && !savedClips.length ? (
+              <div className={styles.emptyLiked}>
+                <h3>No saved videos yet</h3>
+                <p>Tap Save on any Godly Me moment to keep it close for future encouragement.</p>
+              </div>
+            ) : null}
+          </div>
+        </section>
+      </div>
 
       {showFollowingList && canShowFollowLists ? (
         <Overlay

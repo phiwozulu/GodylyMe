@@ -5,16 +5,22 @@
   --inbox-pill: #F0ECE5;
   --inbox-accent: #5c5238;
   --inbox-muted: #8a7b60;
+  display: flex;
+  justify-content: center;
+  padding: clamp(1.5rem, 4vw, 2.5rem) 1.25rem calc(var(--bottom-nav-height) + 2.75rem);
+  background: transparent;
+}
+
+.inboxCard {
   width: min(420px, 94vw);
-  margin: 0 auto;
-  padding: 2.25rem 1.25rem calc(var(--bottom-nav-height) + 2.75rem);
   display: flex;
   flex-direction: column;
   gap: 1.75rem;
   background: var(--inbox-bg);
   border-radius: 32px;
-  /* subtle green stroke around the inbox content (thinner) */
   border: 0.5px solid #2f361f;
+  box-shadow: 0 18px 44px -26px rgba(0, 0, 0, 0.35);
+  padding: 2.25rem 1.25rem calc(var(--bottom-nav-height) + 2.75rem);
 }
 
 .hero h1 {
@@ -986,8 +992,12 @@
 
 @media (max-width: 600px) {
   .inbox {
+    padding: 1.5rem 0.75rem calc(var(--bottom-nav-height) + 2.25rem);
+  }
+
+  .inboxCard {
     width: 100%;
-    border-radius: 0;
+    border-radius: 26px;
     padding: 1.75rem 1rem calc(var(--bottom-nav-height) + 2.25rem);
   }
 

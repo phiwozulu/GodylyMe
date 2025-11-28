@@ -279,7 +279,7 @@ export default function Upload() {
         </section>
 
         <div className={styles.actions}>
-          <button type="submit">Upload to Vessel</button>
+          <button type="submit">Upload to GodlyMe</button>
         </div>
         {error ? <p className={styles.error}>{error}</p> : null}
       </form>

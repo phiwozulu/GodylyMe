@@ -193,12 +193,12 @@
   justify-content: center;
   align-items: flex-start; /* keep contents near the top */
   margin-top: 20px; /* ~20px gap between the search field and results */
-  pointer-events: all;
+  pointer-events: none; /* let clicks reach the search field; panel re-enables below */
   z-index: 10;
 }
 
 .searchResultsPanel {
-  pointer-events: all;
+  pointer-events: auto;
   margin: 0 auto;
   width: 100%;
   max-width: clamp(420px, 78vw, 540px);
