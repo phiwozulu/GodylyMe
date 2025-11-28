@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { z } from 'zod'
 import * as jwt from 'jsonwebtoken'
-import { compose, cors, errorHandler, validateBody, withDatabase } from '../_lib/serverless'
+import { compose, cors, errorHandler, validateBody } from '../_lib/serverless'
 import {
   comparePassword,
   findUserByEmail,
@@ -58,4 +58,4 @@ async function handler(req: VercelRequest, res: VercelResponse, payload: z.infer
   })
 }
 
-export default compose(withDatabase, cors, errorHandler, validateBody(loginSchema))(handler)
+export default compose(cors, errorHandler, validateBody(loginSchema))(handler)

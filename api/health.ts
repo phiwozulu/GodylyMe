@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { compose, cors, errorHandler, withDatabase } from './_lib/serverless'
+import { compose, cors, errorHandler } from './_lib/serverless'
 import { getPgPool, getRedis } from './_lib/clients'
 
 async function handler(req: VercelRequest, res: VercelResponse) {
@@ -17,4 +17,4 @@ async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-export default compose(withDatabase, cors, errorHandler)(handler)
+export default compose(cors, errorHandler)(handler)
