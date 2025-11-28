@@ -10,8 +10,8 @@
   padding: 2rem 1.5rem;
   border-radius: 18px;
   border: 1px dashed var(--border-muted);
-  background: rgba(15, 18, 28, 0.85);
-  color: var(--text-secondary);
+  background: var(--app-background);
+  color: #0b0b0b;
   text-align: center;
   margin: 0 1rem 2rem;
 }

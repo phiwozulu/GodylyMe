@@ -47,6 +47,14 @@ export default function Feed() {
     setTimeout(() => inputRef.current?.focus(), 50)
   }, [])
 
+  const handleClearSearch = React.useCallback(() => {
+    setSearchQuery('')
+    setSearchResults(null)
+    setShowResults(false)
+    setSearchLoading(false)
+    inputRef.current?.focus()
+  }, [])
+
   async function performSearch(q?: string) {
     const value = (q ?? searchQuery).trim()
     if (!value) {
@@ -151,7 +159,7 @@ export default function Feed() {
                 ref={inputRef}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={'Search creators, testimonies, prayer topics, or verses — start with @ for handles'}
+                placeholder={'Search creators, testimonies, prayer topics, or verses �?" start with @ for handles'}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     void performSearch()
@@ -163,10 +171,7 @@ export default function Feed() {
               />
               <button
                 type="button"
-                onClick={() => {
-                  setSearchQuery('')
-                  setShowResults(false)
-                }}
+                onClick={handleClearSearch}
                 aria-label="Clear search"
               >
                 ×

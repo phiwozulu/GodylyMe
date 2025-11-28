@@ -1,7 +1,7 @@
 import React from "react"
 import { useNavigate } from "react-router-dom"
 import VideoCard from "../shared/VideoCard"
-import { contentService, type Video } from "../services/contentService"
+import { contentService, type Video, VIDEO_PLACEHOLDER, THUMBNAIL_PLACEHOLDER } from "../services/contentService"
 import { formatLikes } from "../services/mockData"
 import { CommentSheet, DonateSheet } from "../shared/VideoSheets"
 import styles from "./ForYou.module.css"
@@ -9,6 +9,30 @@ import styles from "./ForYou.module.css"
 type Props = {
   filter?: (clip: Video) => boolean
   refreshKey?: number
+}
+
+const offlineClip: Video = {
+  id: "offline-demo",
+  title: "We’re reconnecting — enjoy this preview clip",
+  description: "This sample video shows while we reconnect to the server. Once the backend is up, your feed will appear here.",
+  user: {
+    id: "godlyme",
+    handle: "godlyme",
+    name: "Godlyme",
+    churchHome: "Preview channel",
+  },
+  videoUrl: VIDEO_PLACEHOLDER,
+  thumbnailUrl: THUMBNAIL_PLACEHOLDER,
+  category: "testimony",
+  tags: ["faith", "hope", "inspiration"],
+  durationSec: 62,
+  likes: 1280,
+  likesDisplay: "1.2K",
+  comments: 240,
+  bookmarks: 96,
+  donations: 12,
+  shares: 32,
+  publishedAt: new Date().toISOString(),
 }
 
 const normalizeProfileTarget = (video: Video): string => {
@@ -40,8 +64,9 @@ export default function ForYou({ filter, refreshKey }: Props) {
 
     async function loadFeed() {
       const data = await contentService.fetchForYouFeed()
+      const next = data.length ? data : [offlineClip]
       if (mounted) {
-        setClips(data)
+        setClips(next)
         setLoading(false)
       }
     }
@@ -68,7 +93,8 @@ export default function ForYou({ filter, refreshKey }: Props) {
       .fetchForYouFeed()
       .then((data) => {
         if (cancelled) return
-        setClips(data)
+        const next = data.length ? data : [offlineClip]
+        setClips(next)
         setLoading(false)
         setIndex(0)
         const node = trackRef.current
