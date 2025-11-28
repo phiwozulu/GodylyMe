@@ -1,0 +1,130 @@
+=====================================================
+VERCEL ENVIRONMENT VARIABLES - COPY & PASTE READY
+=====================================================
+
+Go to: https://vercel.com/dashboard
+Then: Your Project → Settings → Environment Variables
+
+For EACH variable below:
+1. Click "Add New"
+2. Enter the Name (left side)
+3. Paste the Value (right side)
+4. Check ALL environments: ✅ Production ✅ Preview ✅ Development
+5. Click "Save"
+
+=====================================================
+REQUIRED VARIABLES (Must set all of these)
+=====================================================
+
+Name: DATABASE_URL
+Value: postgres://postgres:TRcvMYUvzEs-2-7YR-gb@postgresql-godlyme-u57058.vm.elestio.app:25432/postgres?sslmode=require
+
+---
+
+Name: PGSSLMODE
+Value: require
+
+---
+
+Name: REDIS_URL
+Value: redis://default:YAi-Jr6OdEDXAgG0Vdjp@redis-godlyme-u57058.vm.elestio.app:26379/0
+
+---
+
+Name: JWT_SECRET
+Value: 2f3a567c595d25921cd7c7156becf6f33a4844b0cf8c9ea1d0178e0f8a9b293ef05d276e16773bf1c6fce2410e1ab9e2b065a68a8b000f4211bf0e97755cf245
+
+=====================================================
+EMAIL VARIABLES (For sending verification emails)
+=====================================================
+
+Name: SMTP_HOST
+Value: smtp.hostinger.com
+
+---
+
+Name: SMTP_PORT
+Value: 587
+
+---
+
+Name: SMTP_USER
+Value: verification@godlyme.com
+
+---
+
+Name: SMTP_PASS
+Value: BoboandPhiwoRock2025!
+
+---
+
+Name: EMAIL_FROM
+Value: "Godly Me Verification <verification@godlyme.com>"
+
+=====================================================
+OPTIONAL VARIABLES
+=====================================================
+
+Name: APP_BASE_URL
+Value: https://your-app-name.vercel.app
+(Update this AFTER your first deployment with your actual Vercel URL)
+
+---
+
+Name: UPLOAD_MAX_BYTES
+Value: 209715200
+
+---
+
+Name: PORT
+Value: 4000
+
+=====================================================
+QUICK COPY - ALL REQUIRED VARS (for CLI)
+=====================================================
+
+If using Vercel CLI, run these commands:
+
+vercel env add DATABASE_URL
+# Paste: postgres://postgres:TRcvMYUvzEs-2-7YR-gb@postgresql-godlyme-u57058.vm.elestio.app:25432/postgres?sslmode=require
+
+vercel env add PGSSLMODE
+# Paste: require
+
+vercel env add REDIS_URL
+# Paste: redis://default:YAi-Jr6OdEDXAgG0Vdjp@redis-godlyme-u57058.vm.elestio.app:26379/0
+
+vercel env add JWT_SECRET
+# Paste: 2f3a567c595d25921cd7c7156becf6f33a4844b0cf8c9ea1d0178e0f8a9b293ef05d276e16773bf1c6fce2410e1ab9e2b065a68a8b000f4211bf0e97755cf245
+
+vercel env add SMTP_HOST
+# Paste: smtp.hostinger.com
+
+vercel env add SMTP_PORT
+# Paste: 587
+
+vercel env add SMTP_USER
+# Paste: verification@godlyme.com
+
+vercel env add SMTP_PASS
+# Paste: BoboandPhiwoRock2025!
+
+vercel env add EMAIL_FROM
+# Paste: "Godly Me Verification <verification@godlyme.com>"
+
+=====================================================
+IMPORTANT NOTES
+=====================================================
+
+✅ Your JWT Secret (NEW): 2f3a567c595d25921cd7c7156becf6f33a4844b0cf8c9ea1d0178e0f8a9b293ef05d276e16773bf1c6fce2410e1ab9e2b065a68a8b000f4211bf0e97755cf245
+
+✅ Local .env file created at: vessel-app/backend/.env
+
+✅ After deployment, update APP_BASE_URL to your Vercel URL
+
+✅ Make sure to select ALL environments when adding each variable:
+   - Production (for main branch)
+   - Preview (for PRs and branches)
+   - Development (for vercel dev)
+
+=====================================================

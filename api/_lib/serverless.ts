@@ -1,7 +1,20 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { ZodSchema } from 'zod'
+import { initDatabase } from './initDatabase'
 
 export type Handler = (req: VercelRequest, res: VercelResponse) => Promise<void | VercelResponse>
+
+/**
+ * Database initialization middleware.
+ * Ensures all database tables exist before processing the request.
+ * Only runs once per serverless function instance (cold start).
+ */
+export function withDatabase(handler: Handler): Handler {
+  return async (req: VercelRequest, res: VercelResponse) => {
+    await initDatabase()
+    return handler(req, res)
+  }
+}
 
 export function cors(handler: Handler): Handler {
   return async (req: VercelRequest, res: VercelResponse) => {

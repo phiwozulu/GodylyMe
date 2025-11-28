@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { z } from 'zod'
 import * as jwt from 'jsonwebtoken'
-import { compose, cors, errorHandler, validateBody } from '../_lib/serverless'
+import { compose, cors, errorHandler, validateBody, withDatabase } from '../_lib/serverless'
 import { resetPasswordWithToken, presentUser, type DbUser } from '../../vessel-app/backend/src/services/userService'
 
 const resetPasswordSchema = z.object({
@@ -42,4 +42,4 @@ async function handler(req: VercelRequest, res: VercelResponse, payload: z.infer
   })
 }
 
-export default compose(cors, errorHandler, validateBody(resetPasswordSchema))(handler)
+export default compose(withDatabase, cors, errorHandler, validateBody(resetPasswordSchema))(handler)

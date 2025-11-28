@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { compose, cors, errorHandler } from './_lib/serverless'
+import { compose, cors, errorHandler, withDatabase } from './_lib/serverless'
 import { getPgPool, getRedis } from './_lib/clients'
 
 async function handler(req: VercelRequest, res: VercelResponse) {
@@ -10,11 +10,11 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     const redis = getRedis()
     await redis.ping()
 
-    res.json({ status: 'ok' })
+    res.json({ status: 'ok', database: 'connected', redis: 'connected' })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown connectivity issue'
     res.status(503).json({ status: 'error', message })
   }
 }
 
-export default compose(cors, errorHandler)(handler)
+export default compose(withDatabase, cors, errorHandler)(handler)

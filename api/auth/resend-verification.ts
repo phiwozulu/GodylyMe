@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { z } from 'zod'
-import { compose, cors, errorHandler, validateBody } from '../_lib/serverless'
+import { compose, cors, errorHandler, validateBody, withDatabase } from '../_lib/serverless'
 import { findUserByEmail, updateVerificationCode } from '../../vessel-app/backend/src/services/userService'
 import { buildVerificationEmail, sendEmail } from '../../vessel-app/backend/src/services/emailService'
 
@@ -27,4 +27,4 @@ async function handler(req: VercelRequest, res: VercelResponse, payload: z.infer
   res.json({ message: 'Verification code resent.' })
 }
 
-export default compose(cors, errorHandler, validateBody(resendSchema))(handler)
+export default compose(withDatabase, cors, errorHandler, validateBody(resendSchema))(handler)
