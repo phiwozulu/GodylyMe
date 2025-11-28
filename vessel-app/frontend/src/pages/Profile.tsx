@@ -36,6 +36,7 @@ export default function Profile() {
   const navigate = useNavigate()
   const [activeProfile, setActiveProfile] = React.useState<ActiveProfile>(() => contentService.getActiveProfile())
   const targetId = id === "me" ? activeProfile.id : id || ""
+  const [isAuthenticated, setIsAuthenticated] = React.useState(contentService.isAuthenticated())
 
   const [clips, setClips] = React.useState<Video[]>([])
   const [likedClips, setLikedClips] = React.useState<Video[]>([])
@@ -53,6 +54,7 @@ export default function Profile() {
   React.useEffect(() => {
     const unsubscribe = contentService.subscribe(() => {
       setActiveProfile(contentService.getActiveProfile())
+      setIsAuthenticated(contentService.isAuthenticated())
       setFollowVersion((value) => value + 1)
     })
     return unsubscribe
@@ -66,7 +68,6 @@ export default function Profile() {
   const normalizedTargetId = normalize(targetId)
   const normalizedActiveId = normalize(activeProfile.id)
   const isSelf = normalizedTargetId === normalizedActiveId && normalizedTargetId.length > 0
-  const isAuthenticated = contentService.isAuthenticated()
   const isGuest = isSelf && !isAuthenticated
 
   const displayName = isSelf
