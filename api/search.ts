@@ -14,7 +14,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
   const { q, limit = 10 } = req.body
 
   if (!q || typeof q !== 'string' || !q.trim()) {
-    return res.json({ users: [], videos: [] })
+    return res.json({ accounts: [], videos: [], categories: [] })
   }
 
   // Normalize search term - remove @ prefix if present
@@ -86,7 +86,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
       },
     }))
 
-    res.json({ users, videos })
+    res.json({ accounts: users, videos, categories: [] })
   } catch (error) {
     console.error('Error searching:', error)
     throw error
