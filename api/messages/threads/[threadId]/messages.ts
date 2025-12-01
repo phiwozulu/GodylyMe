@@ -120,7 +120,8 @@ async function handlePostMessage(
   res.json({
     message: {
       id: message.id,
-      content: message.content,
+      threadId: message.thread_id,
+      body: message.content,
       createdAt: message.created_at,
       sender: {
         id: user.id,
