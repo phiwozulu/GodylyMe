@@ -63,7 +63,7 @@ async function handleGetMessages(
     LIMIT $2 OFFSET $3
   `, [threadId, limit, offset])
 
-  const messages = result.rows.map(row => ({
+  const messages = result.rows.map((row: any) => ({
     id: row.id,
     content: row.content,
     createdAt: row.created_at,

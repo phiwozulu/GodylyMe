@@ -117,7 +117,7 @@ async function handleGetComments(
       LIMIT $2 OFFSET $3
     `, [videoId, limit, offset])
 
-    const comments = result.rows.map(row => ({
+    const comments = result.rows.map((row: any) => ({
       id: row.id,
       content: row.content,
       user: {

@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
+    "@types/busboy": "^1.5.4",
     "@vercel/node": "^3.0.0",
     "bcryptjs": "^2.4.3",
     "ioredis": "^5.4.2",

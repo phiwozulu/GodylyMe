@@ -85,7 +85,7 @@ async function handleUpload(req: VercelRequest, res: VercelResponse) {
     await new Promise((resolve, reject) => {
       const busboy = Busboy({ headers: req.headers as any })
 
-      busboy.on('field', (fieldname, value) => {
+      busboy.on('field', (fieldname: string, value: string) => {
         fields[fieldname] = value
       })
 
