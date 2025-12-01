@@ -53,13 +53,23 @@ export async function initDatabase(): Promise<void> {
     // 2. User follows table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS user_follows (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         follower_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        following_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        followee_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        UNIQUE(follower_id, following_id)
+        PRIMARY KEY (follower_id, followee_id)
       );
     `)
+
+    // Rename followee_id to following_id for consistency (migration)
+    await pool.query(`
+      DO $$
+      BEGIN
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'user_follows' AND column_name = 'followee_id') THEN
+          ALTER TABLE user_follows RENAME COLUMN followee_id TO following_id;
+        END IF;
+      END $$;
+    `)
+
     await pool.query('CREATE INDEX IF NOT EXISTS idx_user_follows_follower ON user_follows(follower_id);')
     await pool.query('CREATE INDEX IF NOT EXISTS idx_user_follows_following ON user_follows(following_id);')
 
