@@ -6,3 +6,13 @@ video {
   display: block;
   background: black;
 }
+
+html, body {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+body::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}

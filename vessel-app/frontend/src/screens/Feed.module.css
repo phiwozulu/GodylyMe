@@ -439,6 +439,6 @@
 
 @media (max-width: 600px) {
   .bottomChrome {
-    width: min(420px, 94vw);
+    width: clamp(360px, 94vw, 420px);
   }
 }

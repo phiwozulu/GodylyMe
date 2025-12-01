@@ -6,12 +6,20 @@
   --profile-accent: #5c5238;
   --profile-border: #e1d6c4;
   min-height: 100vh;
+  min-height: 100dvh;
   background: transparent;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: clamp(1rem, 5vw, 2.25rem) 1.25rem calc(var(--bottom-nav-height) + 2rem);
   color: var(--profile-ink);
+  overflow-y: auto;
+  scrollbar-width: none;
+  overscroll-behavior: contain;
+}
+
+.profile::-webkit-scrollbar {
+  display: none;
 }
 
 .topBar {

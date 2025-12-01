@@ -1,11 +1,16 @@
 .card {
   position: relative;
-  width: 100vw;
-  height: 100vh;
-  max-height: 100vh;
+  width: 100%;
+  max-width: var(--frame-max-width, 560px);
+  min-width: var(--frame-min-width, 360px);
+  height: 100%;
+  max-height: 100%;
+  min-height: var(--frame-min-height, 640px);
+  aspect-ratio: 9 / 16;
   border-radius: 0;
   overflow: hidden;
   background: black;
+  margin: 0 auto;
 }
 
 .card::after {

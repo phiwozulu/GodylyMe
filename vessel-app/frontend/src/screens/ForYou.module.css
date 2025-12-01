@@ -18,18 +18,25 @@
 
 .viewport {
   position: relative;
-  width: 100vw;
+  --frame-min-width: 360px;
+  --frame-max-width: 560px;
+  --frame-min-height: 640px;
+  width: clamp(var(--frame-min-width), 100vw, var(--frame-max-width));
   height: 100vh;
   height: 100dvh;
+  min-height: var(--frame-min-height);
   display: flex;
   justify-content: center;
   align-items: stretch;
+  margin: 0 auto;
 }
 
 .track {
   width: 100%;
-  height: 100vh;
-  height: 100dvh;
+  height: 100%;
+  max-height: 100vh;
+  max-height: 100dvh;
+  min-height: var(--frame-min-height);
   overflow-y: auto;
   scroll-snap-type: y mandatory;
   border-radius: 0;
@@ -47,8 +54,7 @@
 }
 
 .slide {
-  min-height: 100vh;
-  min-height: 100dvh;
+  min-height: var(--frame-min-height);
   width: 100%;
   display: flex;
   align-items: stretch;
@@ -61,7 +67,8 @@
 
 @media (min-width: 900px) {
   .viewport {
-    max-width: clamp(420px, 48vw, 520px);
+    width: clamp(var(--frame-min-width), 48vw, var(--frame-max-width));
+    max-width: clamp(420px, 48vw, var(--frame-max-width));
     margin: 0 auto;
     border-radius: 28px;
     box-shadow: 0 24px 90px rgba(0, 0, 0, 0.55), 0 18px 50px rgba(0, 0, 0, 0.35);

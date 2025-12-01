@@ -26,7 +26,7 @@
   left: 50%;
   bottom: calc(0.9rem + var(--safe-area-bottom));
   transform: translateX(-50%);
-  width: min(560px, 92vw);
+  width: clamp(360px, 92vw, 560px);
   height: 70px;
   display: flex;
   align-items: center;
