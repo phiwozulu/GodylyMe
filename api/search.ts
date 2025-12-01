@@ -36,9 +36,9 @@ async function handler(req: VercelRequest, res: VercelResponse) {
         country
       FROM users
       WHERE
-        LOWER(name) LIKE $1 OR
-        LOWER(handle) LIKE $1 OR
-        LOWER(email) LIKE $1 OR
+        LOWER(COALESCE(name, '')) LIKE $1 OR
+        LOWER(COALESCE(handle, '')) LIKE $1 OR
+        LOWER(COALESCE(email, '')) LIKE $1 OR
         id = $2
       LIMIT $3
     `, [`%${normalizedTerm}%`, normalizedTerm, limit])
