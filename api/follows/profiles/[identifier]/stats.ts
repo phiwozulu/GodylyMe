@@ -14,15 +14,10 @@ async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    // Normalize identifier - remove @ prefix if present
-    const normalizedIdentifier = identifier.startsWith('@')
-      ? identifier.slice(1).toLowerCase()
-      : identifier.toLowerCase()
-
     // Find user by handle or ID
     const userResult = await pool.query(
       'SELECT id FROM users WHERE handle = $1 OR id = $1',
-      [normalizedIdentifier]
+      [identifier.toLowerCase()]
     )
 
     if (userResult.rows.length === 0) {
