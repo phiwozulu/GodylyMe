@@ -75,6 +75,11 @@ export async function initDatabase(): Promise<void> {
 
     // 3. Videos table - skip if already exists (may have different schema)
     // The existing videos table uses TEXT id instead of UUID
+    // Add missing columns if they don't exist
+    await pool.query('ALTER TABLE videos ADD COLUMN IF NOT EXISTS category TEXT DEFAULT \'general\';')
+    await pool.query('ALTER TABLE videos ADD COLUMN IF NOT EXISTS tags TEXT[] DEFAULT \'{}\';')
+    await pool.query('ALTER TABLE videos ADD COLUMN IF NOT EXISTS duration_seconds INTEGER DEFAULT 0;')
+
     // Just add indexes if they don't exist
     await pool.query('CREATE INDEX IF NOT EXISTS idx_videos_user_id ON videos(user_id);')
     await pool.query('CREATE INDEX IF NOT EXISTS idx_videos_created_at ON videos(created_at DESC);')
@@ -126,6 +131,17 @@ export async function initDatabase(): Promise<void> {
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
     `)
+
+    // Add user_id column if it doesn't exist (migration for existing tables)
+    await pool.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'notifications' AND column_name = 'user_id') THEN
+          ALTER TABLE notifications ADD COLUMN user_id UUID REFERENCES users(id) ON DELETE CASCADE;
+        END IF;
+      END $$;
+    `)
+
     await pool.query('CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);')
     await pool.query('CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at DESC);')
 
