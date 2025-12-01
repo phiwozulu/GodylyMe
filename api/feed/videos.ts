@@ -2,7 +2,6 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { compose, cors, errorHandler, requireAuth } from '../_lib/serverless'
 import { getPgPool } from '../_lib/clients'
 import { initDatabase } from '../_lib/initDatabase'
-import formidable from 'formidable'
 
 async function handler(req: VercelRequest, res: VercelResponse) {
   await initDatabase()
@@ -21,18 +20,8 @@ async function handleUpload(req: VercelRequest, res: VercelResponse) {
   const pool = getPgPool()
 
   try {
-    // Parse multipart form data
-    const form = formidable({
-      maxFileSize: parseInt(process.env.UPLOAD_MAX_BYTES || '209715200'), // 200MB default
-    })
-
-    const [fields, files] = await form.parse(req)
-
-    const title = Array.isArray(fields.title) ? fields.title[0] : fields.title
-    const description = Array.isArray(fields.description) ? fields.description[0] : fields.description
-    const videoUrl = Array.isArray(fields.videoUrl) ? fields.videoUrl[0] : fields.videoUrl
-    const thumbnailUrl = Array.isArray(fields.thumbnailUrl) ? fields.thumbnailUrl[0] : fields.thumbnailUrl
-    const category = Array.isArray(fields.category) ? fields.category[0] : fields.category
+    // Get data directly from req.body (Vercel already parses it)
+    const { title, description, videoUrl, thumbnailUrl, category } = req.body as any
 
     if (!title || !title.trim()) {
       return res.status(400).json({ message: 'Title is required' })
@@ -147,10 +136,3 @@ async function handleGetVideos(req: VercelRequest, res: VercelResponse) {
 }
 
 export default compose(cors, errorHandler, requireAuth)(handler)
-
-// Disable body parsing for file uploads
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-}
