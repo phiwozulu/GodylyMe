@@ -16,7 +16,7 @@ function getJwtSecret(): string {
   return secret
 }
 
-export function requireAuth(handler: (req: AuthenticatedRequest, res: VercelResponse) => Promise<void>): Handler {
+export function requireAuth(handler: (req: AuthenticatedRequest, res: VercelResponse) => Promise<void | VercelResponse>): Handler {
   return async (req: VercelRequest, res: VercelResponse) => {
     const authHeader = req.headers.authorization
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
