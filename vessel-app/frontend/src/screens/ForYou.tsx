@@ -119,6 +119,8 @@ export default function ForYou({ filter, refreshKey }: Props) {
     return clips.filter(filter)
   }, [clips, filter])
 
+  const locked = visibleClips.length <= 1
+
   React.useEffect(() => {
     setIndex(0)
     const node = trackRef.current
@@ -138,6 +140,7 @@ export default function ForYou({ filter, refreshKey }: Props) {
   )
 
   const handleScroll = React.useCallback(() => {
+    if (locked) return
     if (rafRef.current !== null) {
       cancelAnimationFrame(rafRef.current)
     }
@@ -162,6 +165,20 @@ export default function ForYou({ filter, refreshKey }: Props) {
       }
     },
     [index, scrollTo]
+  )
+
+  const handleWheel = React.useCallback(
+    (event: React.WheelEvent<HTMLDivElement>) => {
+      if (locked) {
+        event.preventDefault()
+        event.stopPropagation()
+        const node = trackRef.current
+        if (node && node.scrollTop !== 0) {
+          node.scrollTo({ top: 0 })
+        }
+      }
+    },
+    [locked]
   )
 
   const handleFollowAction = React.useCallback(
@@ -234,7 +251,14 @@ export default function ForYou({ filter, refreshKey }: Props) {
   return (
     <>
       <div className={styles.viewport}>
-        <div className={styles.track} ref={trackRef} onScroll={handleScroll} onKeyDown={handleKey} tabIndex={0}>
+        <div
+          className={locked ? `${styles.track} ${styles.trackLocked}` : styles.track}
+          ref={trackRef}
+          onScroll={handleScroll}
+          onKeyDown={handleKey}
+          onWheel={handleWheel}
+          tabIndex={locked ? -1 : 0}
+        >
           {visibleClips.map((clip, clipIndex) => {
             const userId = resolveUserId(clip)
             const isFollowingCreator = contentService.isFollowing(userId)
