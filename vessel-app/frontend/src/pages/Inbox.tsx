@@ -69,6 +69,16 @@ export default function Inbox() {
   const isAuthenticated = contentService.isAuthenticated()
   const threadRefs = React.useRef<Record<string, HTMLDivElement | null>>({})
 
+  const openProfileFromSuggestion = React.useCallback(
+    (handle: string) => {
+      const target = normalizeHandle(handle)
+      if (target) {
+        navigate(`/profile/${target}`)
+      }
+    },
+    [navigate]
+  )
+
   React.useEffect(() => {
     const unsubscribe = contentService.subscribe(() => {
       setActiveProfile(contentService.getActiveProfile())
@@ -899,7 +909,14 @@ export default function Inbox() {
                   <div className={styles.suggestionTopRow}>
                     <div className={styles.suggestionTextGroup}>
                       <span className={styles.suggestionLabel}>You may know</span>
-                      <strong>{formatHandle(suggestion.handle)}</strong>
+                      <button
+                        type="button"
+                        className={styles.suggestionHandle}
+                        onClick={() => openProfileFromSuggestion(suggestion.handle)}
+                        aria-label={`View ${formatHandle(suggestion.handle)} profile`}
+                      >
+                        {formatHandle(suggestion.handle)}
+                      </button>
                     </div>
                     <div className={styles.suggestionActionsCompact}>
                       <button
