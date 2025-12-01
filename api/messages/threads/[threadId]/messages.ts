@@ -85,9 +85,11 @@ async function handlePostMessage(
   userId: string,
   pool: any
 ) {
-  const { content } = req.body
+  // Accept both 'body' and 'content' for backward compatibility
+  const { body, content } = req.body
+  const messageContent = body || content
 
-  if (!content || !content.trim()) {
+  if (!messageContent || !messageContent.trim()) {
     return res.status(400).json({ message: 'Message content is required' })
   }
 
@@ -96,7 +98,7 @@ async function handlePostMessage(
     INSERT INTO messages (thread_id, sender_id, content, created_at)
     VALUES ($1, $2, $3, NOW())
     RETURNING id, thread_id, sender_id, content, created_at
-  `, [threadId, userId, content.trim()])
+  `, [threadId, userId, messageContent.trim()])
 
   const message = result.rows[0]
 

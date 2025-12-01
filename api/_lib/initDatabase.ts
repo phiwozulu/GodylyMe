@@ -142,6 +142,10 @@ export async function initDatabase(): Promise<void> {
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'notifications' AND column_name = 'target_id') THEN
           ALTER TABLE notifications ADD COLUMN target_id TEXT;
         END IF;
+        -- Make recipient_id nullable if it exists (for backward compatibility)
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'notifications' AND column_name = 'recipient_id') THEN
+          ALTER TABLE notifications ALTER COLUMN recipient_id DROP NOT NULL;
+        END IF;
       END $$;
     `)
 
