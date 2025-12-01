@@ -132,12 +132,35 @@ export async function initDatabase(): Promise<void> {
       );
     `)
 
-    // Add user_id column if it doesn't exist (migration for existing tables)
+    // Add missing columns if they don't exist (migrations for existing tables)
     await pool.query(`
       DO $$
       BEGIN
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'notifications' AND column_name = 'user_id') THEN
           ALTER TABLE notifications ADD COLUMN user_id UUID REFERENCES users(id) ON DELETE CASCADE;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'notifications' AND column_name = 'target_id') THEN
+          ALTER TABLE notifications ADD COLUMN target_id TEXT;
+        END IF;
+      END $$;
+    `)
+
+    // Add missing columns to messages table if they don't exist
+    await pool.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'messages' AND column_name = 'content') THEN
+          ALTER TABLE messages ADD COLUMN content TEXT NOT NULL DEFAULT '';
+        END IF;
+      END $$;
+    `)
+
+    // Add missing columns to video_comments table if they don't exist
+    await pool.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'video_comments' AND column_name = 'content') THEN
+          ALTER TABLE video_comments ADD COLUMN content TEXT NOT NULL DEFAULT '';
         END IF;
       END $$;
     `)
