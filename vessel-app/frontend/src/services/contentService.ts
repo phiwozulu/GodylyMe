@@ -1767,29 +1767,20 @@ export const contentService = {
       { label: 'Title', text: input.title },
       { label: 'Description', text: input.description ?? '' },
     ])
-    const form = new FormData()
-    form.append('title', input.title.trim())
-    if (input.description) {
-      form.append('description', input.description)
+
+    // Send as JSON instead of FormData (file uploads handled separately via S3/Cloudinary)
+    const uploadData = {
+      title: input.title.trim(),
+      description: input.description || undefined,
+      category: input.category || undefined,
+      tags: input.tags || undefined,
+      videoUrl: input.file ? undefined : DEFAULT_VIDEO_PLACEHOLDER,
+      thumbnailUrl: input.file ? undefined : DEFAULT_THUMB_PLACEHOLDER,
     }
-    if (input.category) {
-      form.append('category', input.category)
-    }
-    if (input.tags?.length) {
-      form.append('tags', JSON.stringify(input.tags))
-    }
-    if (input.file) {
-      form.append('file', input.file)
-    } else {
-      form.append('videoUrl', DEFAULT_VIDEO_PLACEHOLDER)
-      form.append('thumbnailUrl', DEFAULT_THUMB_PLACEHOLDER)
-    }
-    const payload = await requestJson<{ video: ApiFeedVideo }>(
+
+    const payload = await postJson<{ video: ApiFeedVideo }>(
       '/api/feed/videos',
-      {
-        method: 'POST',
-        body: form,
-      },
+      uploadData,
       true
     )
     const clip = mapApiVideo(payload.video)
