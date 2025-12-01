@@ -93,10 +93,10 @@ async function handlePostMessage(
     return res.status(400).json({ message: 'Message content is required' })
   }
 
-  // Insert message
+  // Insert message (insert into both content and body for backward compatibility)
   const result = await pool.query(`
-    INSERT INTO messages (thread_id, sender_id, content, created_at)
-    VALUES ($1, $2, $3, NOW())
+    INSERT INTO messages (thread_id, sender_id, content, body, created_at)
+    VALUES ($1, $2, $3, $3, NOW())
     RETURNING id, thread_id, sender_id, content, created_at
   `, [threadId, userId, messageContent.trim()])
 

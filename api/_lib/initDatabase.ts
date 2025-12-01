@@ -159,6 +159,10 @@ export async function initDatabase(): Promise<void> {
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'messages' AND column_name = 'content') THEN
           ALTER TABLE messages ADD COLUMN content TEXT NOT NULL DEFAULT '';
         END IF;
+        -- Make body column nullable if it exists (for backward compatibility)
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'messages' AND column_name = 'body') THEN
+          ALTER TABLE messages ALTER COLUMN body DROP NOT NULL;
+        END IF;
       END $$;
     `)
 

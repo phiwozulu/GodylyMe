@@ -73,10 +73,10 @@ async function handler(req: VercelRequest, res: VercelResponse, payload: z.infer
       return res.status(403).json({ message: 'You are not a participant in this thread' })
     }
 
-    // Insert message
+    // Insert message (insert into both content and body for backward compatibility)
     const messageResult = await pool.query(`
-      INSERT INTO messages (thread_id, sender_id, content, created_at)
-      VALUES ($1, $2, $3, NOW())
+      INSERT INTO messages (thread_id, sender_id, content, body, created_at)
+      VALUES ($1, $2, $3, $3, NOW())
       RETURNING id, thread_id, sender_id, content, created_at
     `, [threadId, userId, payload.content])
 
