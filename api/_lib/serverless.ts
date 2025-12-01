@@ -60,8 +60,8 @@ export function errorHandler(handler: Handler): Handler {
   }
 }
 
-export function compose(...handlers: ((h: Handler) => Handler)[]): (h: Handler) => Handler {
-  return (handler: Handler) => {
+export function compose(...handlers: ((h: any) => Handler)[]): (h: any) => Handler {
+  return (handler: any) => {
     return handlers.reduceRight((acc, fn) => fn(acc), handler)
   }
 }
