@@ -23,7 +23,65 @@ async function handleUpload(req: VercelRequest, res: VercelResponse) {
   try {
     const fields: Record<string, string> = {}
 
-    // Parse multipart form data with busboy
+    // Get raw body from Vercel request
+    const rawBody = (req as any).body
+
+    // If body is already parsed as an object, use it directly
+    if (rawBody && typeof rawBody === 'object' && !Buffer.isBuffer(rawBody)) {
+      const { title, description, videoUrl, thumbnailUrl, category } = rawBody
+
+      if (!title || !title.trim()) {
+        return res.status(400).json({ message: 'Title is required' })
+      }
+
+      // Use the parsed data
+      const finalVideoUrl = videoUrl || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+      const finalThumbnailUrl = thumbnailUrl || 'https://picsum.photos/seed/video/640/360'
+
+      // Generate a text ID for the video (matching existing schema)
+      const videoId = `video_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
+      // Insert video into database
+      const result = await pool.query(`
+        INSERT INTO videos (id, user_id, title, description, video_url, thumbnail_url, category, tags, duration_seconds, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
+        RETURNING id, user_id, title, description, video_url, thumbnail_url, category, tags, duration_seconds, created_at
+      `, [videoId, userId, title.trim(), description || null, finalVideoUrl, finalThumbnailUrl, category || 'general', [], 0])
+
+      const video = result.rows[0]
+
+      // Get user info
+      const userResult = await pool.query(
+        'SELECT id, handle, name, photo_url FROM users WHERE id = $1',
+        [userId]
+      )
+
+      const user = userResult.rows[0]
+
+      return res.json({
+        video: {
+          id: video.id,
+          title: video.title,
+          description: video.description,
+          videoUrl: video.video_url,
+          thumbnailUrl: video.thumbnail_url,
+          duration: video.duration_seconds,
+          createdAt: video.created_at,
+          user: {
+            id: user.id,
+            handle: user.handle,
+            name: user.name,
+            photoUrl: user.photo_url,
+          },
+          likes: 0,
+          comments: 0,
+          shares: 0,
+          isLiked: false,
+        },
+      })
+    }
+
+    // Otherwise try busboy parsing
     await new Promise((resolve, reject) => {
       const busboy = Busboy({ headers: req.headers as any })
 
@@ -34,7 +92,13 @@ async function handleUpload(req: VercelRequest, res: VercelResponse) {
       busboy.on('finish', resolve)
       busboy.on('error', reject)
 
-      req.pipe(busboy)
+      // Write body to busboy
+      if (Buffer.isBuffer(rawBody)) {
+        busboy.write(rawBody)
+        busboy.end()
+      } else {
+        reject(new Error('Unable to parse request body'))
+      }
     })
 
     const { title, description, videoUrl, thumbnailUrl, category } = fields
