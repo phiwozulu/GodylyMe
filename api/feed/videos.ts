@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { compose, cors, errorHandler, requireAuth } from '../_lib/serverless'
 import { getPgPool } from '../_lib/clients'
 import { initDatabase } from '../_lib/initDatabase'
+import Busboy from 'busboy'
 
 async function handler(req: VercelRequest, res: VercelResponse) {
   await initDatabase()
@@ -20,8 +21,23 @@ async function handleUpload(req: VercelRequest, res: VercelResponse) {
   const pool = getPgPool()
 
   try {
-    // Get data directly from req.body (Vercel already parses it)
-    const { title, description, videoUrl, thumbnailUrl, category } = req.body as any
+    const fields: Record<string, string> = {}
+
+    // Parse multipart form data with busboy
+    await new Promise((resolve, reject) => {
+      const busboy = Busboy({ headers: req.headers as any })
+
+      busboy.on('field', (fieldname, value) => {
+        fields[fieldname] = value
+      })
+
+      busboy.on('finish', resolve)
+      busboy.on('error', reject)
+
+      req.pipe(busboy)
+    })
+
+    const { title, description, videoUrl, thumbnailUrl, category } = fields
 
     if (!title || !title.trim()) {
       return res.status(400).json({ message: 'Title is required' })
