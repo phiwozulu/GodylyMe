@@ -13,7 +13,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // Get suggested connections based on mutual follows
     // Users that your friends follow, but you don't follow yet
-    const result = await pool.query(`
+    const mutualResult = await pool.query(`
       WITH my_following AS (
         SELECT following_id
         FROM user_follows
@@ -42,16 +42,49 @@ async function handler(req: VercelRequest, res: VercelResponse) {
       LIMIT $2
     `, [userId, limit])
 
-    const suggestions = result.rows.map(row => ({
-      id: row.id,
-      handle: row.handle,
-      name: row.name,
-      photoUrl: row.photo_url,
-      church: row.church,
-      country: row.country,
-      mutualConnections: parseInt(row.mutual_connections) || 0,
-      summary: row.church ? `From ${row.church}` : null,
-    }))
+    // If no mutual-based suggestions, show random users you don't follow
+    let suggestions
+    if (mutualResult.rows.length > 0) {
+      suggestions = mutualResult.rows.map(row => ({
+        id: row.id,
+        handle: row.handle,
+        name: row.name,
+        photoUrl: row.photo_url,
+        church: row.church,
+        country: row.country,
+        mutualConnections: parseInt(row.mutual_connections) || 0,
+        summary: row.church ? `From ${row.church}` : null,
+      }))
+    } else {
+      // Show all users you don't already follow
+      const allUsersResult = await pool.query(`
+        SELECT
+          u.id,
+          u.handle,
+          u.name,
+          u.photo_url,
+          u.church,
+          u.country
+        FROM users u
+        WHERE u.id != $1
+          AND u.id NOT IN (
+            SELECT following_id FROM user_follows WHERE follower_id = $1
+          )
+        ORDER BY u.created_at DESC
+        LIMIT $2
+      `, [userId, limit])
+
+      suggestions = allUsersResult.rows.map(row => ({
+        id: row.id,
+        handle: row.handle,
+        name: row.name,
+        photoUrl: row.photo_url,
+        church: row.church,
+        country: row.country,
+        mutualConnections: 0,
+        summary: row.church ? `From ${row.church}` : null,
+      }))
+    }
 
     res.json({ suggestions })
   } catch (error) {
