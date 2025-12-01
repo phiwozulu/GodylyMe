@@ -147,3 +147,10 @@ async function handleGetVideos(req: VercelRequest, res: VercelResponse) {
 }
 
 export default compose(cors, errorHandler, requireAuth)(handler)
+
+// Disable body parsing for file uploads
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+}
