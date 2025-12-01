@@ -44,6 +44,9 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     `, [`%${normalizedTerm}%`, normalizedTerm, limit])
 
     console.log('User search results:', userResults.rows.length, 'users found')
+    if (userResults.rows.length > 0) {
+      console.log('First user found:', userResults.rows[0])
+    }
 
     const users = userResults.rows.map(row => ({
       id: row.id,
