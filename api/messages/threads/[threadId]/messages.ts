@@ -50,6 +50,7 @@ async function handleGetMessages(
   const result = await pool.query(`
     SELECT
       m.id,
+      m.thread_id,
       m.content,
       m.created_at,
       u.id as sender_id,
@@ -65,7 +66,8 @@ async function handleGetMessages(
 
   const messages = result.rows.map((row: any) => ({
     id: row.id,
-    content: row.content,
+    threadId: row.thread_id,
+    body: row.content,
     createdAt: row.created_at,
     sender: {
       id: row.sender_id,
