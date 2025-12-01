@@ -17,7 +17,10 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     return res.json({ users: [], videos: [] })
   }
 
-  const searchTerm = q.trim().toLowerCase()
+  // Normalize search term - remove @ prefix if present
+  const normalizedTerm = q.trim().startsWith('@')
+    ? q.trim().slice(1).toLowerCase()
+    : q.trim().toLowerCase()
 
   try {
     // Search users
@@ -34,7 +37,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
         LOWER(name) LIKE $1 OR
         LOWER(handle) LIKE $1
       LIMIT $2
-    `, [`%${searchTerm}%`, limit])
+    `, [`%${normalizedTerm}%`, limit])
 
     const users = userResults.rows.map(row => ({
       id: row.id,
@@ -65,7 +68,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
         LOWER(v.title) LIKE $1 OR
         LOWER(v.description) LIKE $1
       LIMIT $2
-    `, [`%${searchTerm}%`, limit])
+    `, [`%${normalizedTerm}%`, limit])
 
     const videos = videoResults.rows.map(row => ({
       id: row.id,
