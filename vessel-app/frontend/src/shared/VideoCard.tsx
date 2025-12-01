@@ -195,17 +195,25 @@ export default function VideoCard({
 
   return (
     <article className={styles.card}>
-      <video
-        ref={videoRef}
-        className={styles.video}
-        src={videoSrc}
-        poster={posterUrl}
-        autoPlay
-        loop
-        muted={muted || !isActive}
-        playsInline
-        onError={() => setVideoSrc((current) => (current === VIDEO_PLACEHOLDER ? current : VIDEO_PLACEHOLDER))}
-      />
+      {videoSrc ? (
+        <video
+          ref={videoRef}
+          className={styles.video}
+          src={videoSrc}
+          poster={posterUrl}
+          autoPlay
+          loop
+          muted={muted || !isActive}
+          playsInline
+          onError={() => setVideoSrc("")}
+        />
+      ) : (
+        <div
+          className={styles.fallbackImage}
+          style={{ backgroundImage: `url(${posterUrl || THUMBNAIL_PLACEHOLDER})` }}
+          aria-hidden="true"
+        />
+      )}
       <div className={styles.overlay}>
         <div className={styles.topMeta}>
           <button
@@ -328,7 +336,7 @@ function safeVideoSrc(candidate?: string) {
   if (trimmed && isVideoAsset(trimmed)) {
     return trimmed
   }
-  return VIDEO_PLACEHOLDER
+  return ""
 }
 
 function isVideoAsset(url: string) {

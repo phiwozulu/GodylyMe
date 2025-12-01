@@ -161,6 +161,7 @@
   width: 100%;
   display: flex;
   justify-content: center;
+  pointer-events: auto; /* keep search bar clickable even though the chrome container blocks pointer events */
 }
 
 .searchField {

@@ -1,7 +1,8 @@
 import React from "react"
 import { useNavigate } from "react-router-dom"
 import VideoCard from "../shared/VideoCard"
-import { contentService, type Video, VIDEO_PLACEHOLDER, THUMBNAIL_PLACEHOLDER } from "../services/contentService"
+import { contentService, type Video } from "../services/contentService"
+import { Media } from "../media"
 import { formatLikes } from "../services/mockData"
 import { CommentSheet, DonateSheet } from "../shared/VideoSheets"
 import styles from "./ForYou.module.css"
@@ -21,8 +22,9 @@ const offlineClip: Video = {
     name: "Godlyme",
     churchHome: "Preview channel",
   },
-  videoUrl: VIDEO_PLACEHOLDER,
-  thumbnailUrl: THUMBNAIL_PLACEHOLDER,
+  // Offline placeholder uses the logo animation video served from /public
+  videoUrl: "/media/logo-video/logo%20animation1.mp4",
+  thumbnailUrl: "/media/logo-video/GodlyMe-Loading.gif",
   category: "testimony",
   tags: ["faith", "hope", "inspiration"],
   durationSec: 62,
