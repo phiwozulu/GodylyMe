@@ -40,8 +40,14 @@ async function handler(req: VercelRequest, res: VercelResponse) {
         vc.content as comment_content
       FROM notifications n
       LEFT JOIN users u ON n.actor_id = u.id
-      LEFT JOIN videos v ON n.target_id = v.id AND n.type IN ('like', 'comment')
-      LEFT JOIN video_comments vc ON n.target_id = vc.id AND n.type = 'comment'
+      LEFT JOIN videos v ON n.target_id = v.id AND n.type IN ('like')
+      LEFT JOIN video_comments vc ON
+        CASE
+          WHEN n.target_id ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+          THEN vc.id::text = n.target_id
+          ELSE false
+        END
+        AND n.type = 'comment'
       WHERE n.user_id = $1
       ORDER BY n.created_at DESC
       LIMIT 50
