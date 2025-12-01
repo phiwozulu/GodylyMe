@@ -73,55 +73,17 @@ export async function initDatabase(): Promise<void> {
     await pool.query('CREATE INDEX IF NOT EXISTS idx_user_follows_follower ON user_follows(follower_id);')
     await pool.query('CREATE INDEX IF NOT EXISTS idx_user_follows_following ON user_follows(following_id);')
 
-    // 3. Videos table
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS videos (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        title TEXT NOT NULL,
-        description TEXT,
-        video_url TEXT NOT NULL,
-        thumbnail_url TEXT,
-        duration INTEGER,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      );
-    `)
+    // 3. Videos table - skip if already exists (may have different schema)
+    // The existing videos table uses TEXT id instead of UUID
+    // Just add indexes if they don't exist
     await pool.query('CREATE INDEX IF NOT EXISTS idx_videos_user_id ON videos(user_id);')
     await pool.query('CREATE INDEX IF NOT EXISTS idx_videos_created_at ON videos(created_at DESC);')
 
-    // 4. Video engagement tables (likes, comments, shares)
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS video_likes (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        video_id UUID NOT NULL REFERENCES videos(id) ON DELETE CASCADE,
-        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        UNIQUE(video_id, user_id)
-      );
-    `)
+    // 4. Video engagement tables - skip if already exist
+    // These tables already exist with the correct schema
     await pool.query('CREATE INDEX IF NOT EXISTS idx_video_likes_video ON video_likes(video_id);')
     await pool.query('CREATE INDEX IF NOT EXISTS idx_video_likes_user ON video_likes(user_id);')
-
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS video_comments (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        video_id UUID NOT NULL REFERENCES videos(id) ON DELETE CASCADE,
-        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        content TEXT NOT NULL,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      );
-    `)
     await pool.query('CREATE INDEX IF NOT EXISTS idx_video_comments_video ON video_comments(video_id);')
-
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS video_shares (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        video_id UUID NOT NULL REFERENCES videos(id) ON DELETE CASCADE,
-        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        UNIQUE(video_id, user_id)
-      );
-    `)
 
     // 5. Messaging tables
     await pool.query(`

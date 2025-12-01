@@ -43,12 +43,15 @@ async function handleUpload(req: VercelRequest, res: VercelResponse) {
     const finalVideoUrl = videoUrl || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
     const finalThumbnailUrl = thumbnailUrl || 'https://picsum.photos/seed/video/640/360'
 
-    // Insert video into database
+    // Generate a text ID for the video (matching existing schema)
+    const videoId = `video_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
+    // Insert video into database (existing schema uses TEXT id, category, tags, duration_seconds)
     const result = await pool.query(`
-      INSERT INTO videos (user_id, title, description, video_url, thumbnail_url, duration, created_at)
-      VALUES ($1, $2, $3, $4, $5, $6, NOW())
-      RETURNING id, user_id, title, description, video_url, thumbnail_url, duration, created_at
-    `, [userId, title.trim(), description || null, finalVideoUrl, finalThumbnailUrl, 0])
+      INSERT INTO videos (id, user_id, title, description, video_url, thumbnail_url, category, tags, duration_seconds, created_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
+      RETURNING id, user_id, title, description, video_url, thumbnail_url, category, tags, duration_seconds, created_at
+    `, [videoId, userId, title.trim(), description || null, finalVideoUrl, finalThumbnailUrl, category || 'general', [], 0])
 
     const video = result.rows[0]
 
@@ -67,7 +70,7 @@ async function handleUpload(req: VercelRequest, res: VercelResponse) {
         description: video.description,
         videoUrl: video.video_url,
         thumbnailUrl: video.thumbnail_url,
-        duration: video.duration,
+        duration: video.duration_seconds,
         createdAt: video.created_at,
         user: {
           id: user.id,
@@ -101,7 +104,7 @@ async function handleGetVideos(req: VercelRequest, res: VercelResponse) {
         v.description,
         v.video_url,
         v.thumbnail_url,
-        v.duration,
+        v.duration_seconds,
         v.created_at,
         u.id as user_id,
         u.handle,
@@ -122,7 +125,7 @@ async function handleGetVideos(req: VercelRequest, res: VercelResponse) {
       description: row.description,
       videoUrl: row.video_url,
       thumbnailUrl: row.thumbnail_url,
-      duration: row.duration,
+      duration: row.duration_seconds,
       createdAt: row.created_at,
       user: {
         id: row.user_id,

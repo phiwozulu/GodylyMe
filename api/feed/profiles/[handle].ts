@@ -34,7 +34,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
         v.description,
         v.video_url,
         v.thumbnail_url,
-        v.duration,
+        v.duration_seconds,
         v.created_at,
         u.id as user_id,
         u.handle,
@@ -55,7 +55,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
       description: row.description,
       videoUrl: row.video_url,
       thumbnailUrl: row.thumbnail_url,
-      duration: row.duration,
+      duration: row.duration_seconds,
       createdAt: row.created_at,
       user: {
         id: row.user_id,
