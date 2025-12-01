@@ -1648,12 +1648,13 @@ export const contentService = {
     if (!trimmed) return { accounts: [], videos: [], categories: [] }
     if (API_BASE_URL) {
       try {
-        const payload = await postJson<any>(`/api/search`, { q: trimmed, limit }, false).catch(() => null)
-        if (payload && (payload.accounts || payload.videos || payload.categories)) {
+        const payload = await postJson<any>(`/api/search`, { q: trimmed, limit }, false)
+        if (payload && typeof payload === 'object' && ('accounts' in payload || 'videos' in payload || 'categories' in payload)) {
           return payload
         }
-      } catch {
-        // ignore and fall through to local search
+      } catch (error) {
+        console.error('Search API error:', error)
+        // Fall through to local search on error
       }
     }
     const local = await searchLocal(trimmed, limit)
