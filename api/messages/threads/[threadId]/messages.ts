@@ -60,7 +60,7 @@ async function handleGetMessages(
     FROM messages m
     LEFT JOIN users u ON m.sender_id = u.id
     WHERE m.thread_id = $1
-    ORDER BY m.created_at DESC
+    ORDER BY m.created_at ASC
     LIMIT $2 OFFSET $3
   `, [threadId, limit, offset])
 
