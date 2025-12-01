@@ -22,8 +22,10 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     ? q.trim().slice(1).toLowerCase()
     : q.trim().toLowerCase()
 
+  console.log('Search query:', { original: q, normalized: normalizedTerm })
+
   try {
-    // Search users
+    // Search users - search by name, handle, or email
     const userResults = await pool.query(`
       SELECT
         id,
@@ -35,9 +37,13 @@ async function handler(req: VercelRequest, res: VercelResponse) {
       FROM users
       WHERE
         LOWER(name) LIKE $1 OR
-        LOWER(handle) LIKE $1
-      LIMIT $2
-    `, [`%${normalizedTerm}%`, limit])
+        LOWER(handle) LIKE $1 OR
+        LOWER(email) LIKE $1 OR
+        id = $2
+      LIMIT $3
+    `, [`%${normalizedTerm}%`, normalizedTerm, limit])
+
+    console.log('User search results:', userResults.rows.length, 'users found')
 
     const users = userResults.rows.map(row => ({
       id: row.id,
