@@ -15,7 +15,6 @@ vessel-app/api/dist
 .env.local
 .env.development
 .env.test
-.env.production
 vessel-app/backend/.env
 vessel-app/backend/.env.local
 vessel-app/frontend/.env.local
