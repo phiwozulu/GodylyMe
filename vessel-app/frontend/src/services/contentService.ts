@@ -442,6 +442,11 @@ function hasAuthSession(): boolean {
   return Boolean(getStoredAuthToken())
 }
 
+function hasProfileSession(): boolean {
+  // Treat users who have a stored profile (e.g., cookie session) as authenticated even if a token is missing.
+  return Boolean(getActiveUserEmail() && getActiveUserId())
+}
+
 function requireVerifiedSession(action: string): void {
   if (!hasAuthSession()) {
     throw new Error(`Sign in to ${action}.`)
@@ -1530,7 +1535,7 @@ export const contentService = {
     return () => listeners.delete(listener)
   },
   isAuthenticated() {
-    return hasAuthSession()
+    return hasAuthSession() || hasProfileSession()
   },
   getActiveProfile,
   updateActiveProfile,
