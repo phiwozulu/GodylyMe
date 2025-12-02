@@ -60,6 +60,34 @@
   display: block;
 }
 
+.backButton {
+  position: absolute;
+  top: clamp(0.75rem, 3vw, 1.25rem);
+  left: clamp(0.75rem, 3vw, 1.25rem);
+  z-index: 10;
+  border: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 16px;
+  background: #fffdf6;
+  color: #20160e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 18px 38px rgba(92, 82, 56, 0.25);
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.backButton:hover {
+  transform: scale(1.05);
+  box-shadow: 0 20px 42px rgba(92, 82, 56, 0.3);
+}
+
+.backButton:active {
+  transform: scale(0.97);
+}
+
 .actionsRail {
   position: absolute;
   right: clamp(0.25rem, 2vw, 0.9rem);

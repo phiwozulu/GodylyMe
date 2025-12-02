@@ -19,6 +19,7 @@ import {
   SvgBookmark,
   SvgVolume,
   SvgMute,
+  SvgBack,
 } from '../shared/icons'
 import styles from './Watch.module.css'
 
@@ -396,6 +397,14 @@ export default function Watch() {
           loop
           controls={false}
         />
+        <button
+          type="button"
+          className={styles.backButton}
+          onClick={() => navigate(-1)}
+          aria-label="Go back"
+        >
+          <SvgBack width={22} height={22} />
+        </button>
         <div className={styles.actionsRail}>
           {actions.map((action) => (
             <button
