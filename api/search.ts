@@ -25,23 +25,42 @@ async function handler(req: VercelRequest, res: VercelResponse) {
   console.log('Search query:', { original: q, normalized: normalizedTerm })
 
   try {
-    // Search users - search by name, handle, or email
-    const userResults = await pool.query(`
-      SELECT
-        id,
-        handle,
-        name,
-        photo_url,
-        church,
-        country
-      FROM users
-      WHERE
-        LOWER(COALESCE(name, '')) LIKE $1 OR
-        LOWER(COALESCE(handle, '')) LIKE $1 OR
-        LOWER(COALESCE(email, '')) LIKE $1 OR
-        id = $2
-      LIMIT $3
-    `, [`%${normalizedTerm}%`, normalizedTerm, limit])
+    // Check if the search term looks like a UUID
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(normalizedTerm)
+
+    // Search users - search by name, handle, or email (and UUID if applicable)
+    const userResults = isUUID
+      ? await pool.query(`
+          SELECT
+            id,
+            handle,
+            name,
+            photo_url,
+            church,
+            country
+          FROM users
+          WHERE
+            LOWER(COALESCE(name, '')) LIKE $1 OR
+            LOWER(COALESCE(handle, '')) LIKE $1 OR
+            LOWER(COALESCE(email, '')) LIKE $1 OR
+            id = $2
+          LIMIT $3
+        `, [`%${normalizedTerm}%`, normalizedTerm, limit])
+      : await pool.query(`
+          SELECT
+            id,
+            handle,
+            name,
+            photo_url,
+            church,
+            country
+          FROM users
+          WHERE
+            LOWER(COALESCE(name, '')) LIKE $1 OR
+            LOWER(COALESCE(handle, '')) LIKE $1 OR
+            LOWER(COALESCE(email, '')) LIKE $1
+          LIMIT $2
+        `, [`%${normalizedTerm}%`, limit])
 
     console.log('User search results:', userResults.rows.length, 'users found')
     if (userResults.rows.length > 0) {
