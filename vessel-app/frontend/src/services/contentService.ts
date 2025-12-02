@@ -1561,6 +1561,12 @@ export const contentService = {
     setStoredAuthToken(null)
     return signOutToGuest()
   },
+  async deleteAccount() {
+    requireVerifiedSession('delete your account')
+    await deleteJson('/api/profile/delete-account', true)
+    setStoredAuthToken(null)
+    return signOutToGuest()
+  },
   suggestHandle(name: string) {
     return generateHandleSuggestion(name)
   },

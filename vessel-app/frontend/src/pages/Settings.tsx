@@ -59,10 +59,30 @@ export default function Settings() {
     navigate("/profile/me", { replace: true })
   }, [navigate])
 
-  const handleComplete = useCallback(() => {
+  const handleDeleteAccount = useCallback(async () => {
+    const confirmed = window.confirm(
+      'Are you sure you want to delete your account? This will permanently delete all your videos, likes, and comments. This action cannot be undone.'
+    )
+    if (!confirmed) return
+
+    try {
+      await contentService.deleteAccount()
+      navigate("/", { replace: true })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unable to delete account right now.'
+      alert(message)
+    }
+  }, [navigate])
+
+  const handleComplete = useCallback((email?: string) => {
     updateMode(null)
-    navigate("/profile/me", { replace: true })
-  }, [navigate, updateMode])
+    // If signing up and email provided, navigate to verification page
+    if (authMode === 'signup' && email) {
+      navigate("/verify-email", { state: { email } })
+    } else {
+      navigate("/profile/me", { replace: true })
+    }
+  }, [authMode, navigate, updateMode])
 
   if (!isSelf) {
     return null
@@ -120,6 +140,9 @@ export default function Settings() {
                   <button type="button" className={styles.settingsSecondary} onClick={handleSignOut}>
                     Sign out
                   </button>
+                  <button type="button" className={styles.settingsSecondary} onClick={handleDeleteAccount} style={{ color: '#e00' }}>
+                    Delete account
+                  </button>
                 </>
               )}
             </div>
@@ -163,7 +186,7 @@ type AuthOverlayProps = {
   activeProfile: ActiveProfile
   onClose: () => void
   onSwitchMode: (mode: AuthMode | null) => void
-  onComplete: () => void
+  onComplete: (email?: string) => void
 }
 
 export function AuthOverlay({ mode, activeProfile, onClose, onSwitchMode, onComplete }: AuthOverlayProps) {
@@ -188,7 +211,7 @@ export function AuthOverlay({ mode, activeProfile, onClose, onSwitchMode, onComp
 
 type SignupFormProps = {
   activeProfile: ActiveProfile
-  onComplete: () => void
+  onComplete: (email?: string) => void
   onSwitchMode: (mode: AuthMode | null) => void
   onClose: () => void
 }
@@ -326,7 +349,7 @@ function SignupForm({ activeProfile, onComplete, onSwitchMode, onClose }: Signup
         })
       }
       setError(null)
-      onComplete()
+      onComplete(trimmedEmail)
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unable to save your profile right now."
       setError(message)
@@ -504,7 +527,7 @@ function SignupForm({ activeProfile, onComplete, onSwitchMode, onClose }: Signup
 }
 
 type SigninFormProps = {
-  onComplete: () => void
+  onComplete: (email?: string) => void
   onSwitchMode: (mode: AuthMode | null) => void
   onClose: () => void
 }
