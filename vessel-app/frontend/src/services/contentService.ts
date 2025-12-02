@@ -1446,8 +1446,16 @@ function ensureLibraryHydrated() {
 
 function getLibrary(): Video[] {
   ensureLibraryHydrated()
-  const base = [...remoteFeed, ...uploads]
-  return USE_SEEDS ? [...base, ...normalizedSeedVideos] : base
+  // Deduplicate by video ID to prevent showing the same video twice
+  const videoMap = new Map<string, Video>()
+  ;[...remoteFeed, ...uploads].forEach((video) => videoMap.set(video.id, video))
+  const base = Array.from(videoMap.values())
+
+  if (USE_SEEDS) {
+    normalizedSeedVideos.forEach((video) => videoMap.set(video.id, video))
+    return Array.from(videoMap.values())
+  }
+  return base
 }
 
 function notify() {
