@@ -85,17 +85,19 @@ async function handleUpload(req: VercelRequest, res: VercelResponse) {
     }
 
     // Handle multipart/form-data file upload
+    // Vercel needs special handling for file uploads
+    if (!req.headers['content-type']?.includes('multipart/form-data')) {
+      return res.status(400).json({ message: 'Content-Type must be multipart/form-data for file uploads' })
+    }
+
     await new Promise<void>((resolve, reject) => {
       const busboy = Busboy({ headers: req.headers as any })
-      const chunks: Buffer[] = []
-      let currentField: string | null = null
 
       busboy.on('field', (fieldname: string, value: string) => {
         fields[fieldname] = value
       })
 
       busboy.on('file', (fieldname: string, file: NodeJS.ReadableStream, info: { filename: string; encoding: string; mimeType: string }) => {
-        currentField = fieldname
         const fileChunks: Buffer[] = []
 
         file.on('data', (data: Buffer) => {
@@ -111,20 +113,20 @@ async function handleUpload(req: VercelRequest, res: VercelResponse) {
             thumbnailFile = { buffer, filename: info.filename, mimetype: info.mimeType }
           }
         })
+
+        file.on('error', (err: Error) => {
+          reject(err)
+        })
       })
 
       busboy.on('finish', () => resolve())
       busboy.on('error', (err: Error) => reject(err))
 
-      // Write body to busboy
-      if (Buffer.isBuffer(rawBody)) {
-        busboy.write(rawBody)
-        busboy.end()
-      } else if (typeof rawBody === 'string') {
-        busboy.write(Buffer.from(rawBody))
-        busboy.end()
+      // Vercel provides the body as a readable stream on req
+      if (typeof (req as any).pipe === 'function') {
+        (req as any).pipe(busboy)
       } else {
-        reject(new Error('Unable to parse request body'))
+        reject(new Error('Unable to parse request body - req is not a stream'))
       }
     })
 
