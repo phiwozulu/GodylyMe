@@ -5,6 +5,13 @@ import { COUNTRY_OPTIONS } from "../shared/countryOptions"
 import styles from "./Signup.module.css"
 
 export default function Signup() {
+  const navigate = useNavigate()
+
+  React.useEffect(() => {
+    // Keep signup consistent with the auth modal experience.
+    navigate("/profile/me/settings?mode=signup", { replace: true })
+  }, [navigate])
+
   const [name, setName] = useState("")
   const [handle, setHandle] = useState("")
   const [email, setEmail] = useState("")
@@ -14,7 +21,6 @@ export default function Signup() {
   const [country, setCountry] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const navigate = useNavigate()
 
   const normalizedHandle = handle.trim().replace(/[^a-zA-Z0-9_]/g, "").toLowerCase()
 

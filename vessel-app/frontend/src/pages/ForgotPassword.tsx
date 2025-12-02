@@ -55,7 +55,7 @@ export default function ForgotPassword() {
             <button type="submit" className={styles.forgotPrimary} disabled={busy}>
               {busy ? "Sending link..." : "Send reset link"}
             </button>
-            <Link className={styles.forgotSecondary} to="/login">
+            <Link className={styles.forgotSecondary} to="/profile/me/settings?mode=login">
               Back to sign in
             </Link>
           </div>

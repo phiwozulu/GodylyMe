@@ -237,10 +237,11 @@ export default function Friends() {
                   }}
                   onFollow={() => handleFollowAction(clip)}
                   onDonate={() => setDonateClip(clip)}
-                  onProfile={() => openProfile(clip)}
-                  followingCreator={isFollowingCreator}
+                  onAuthorClick={() => openProfile(clip)}
+                  isFollowing={isFollowingCreator}
+                  isBookmarked={contentService.isBookmarked(clip.id)}
                   followBusy={busy}
-                  active={isActive}
+                  isActive={isActive}
                   isLiked={contentService.isLiked(clip.id)}
                 />
               </section>

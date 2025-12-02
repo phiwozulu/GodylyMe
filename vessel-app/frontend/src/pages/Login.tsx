@@ -4,11 +4,18 @@ import { contentService } from "../services/contentService"
 import styles from "./Login.module.css"
 
 export default function Login() {
+  const nav = useNavigate()
+
+  React.useEffect(() => {
+    // Keep auth flows consistent: send users to the profile auth modal.
+    nav("/profile/me/settings?mode=login", { replace: true })
+  }, [nav])
+
+  // Fallback UI (rarely shown) in case navigation is blocked.
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const nav = useNavigate()
 
   async function submit(event: React.FormEvent) {
     event.preventDefault()
@@ -83,7 +90,7 @@ export default function Login() {
       </form>
       <div className={styles.supportLinks}>
         <Link to="/forgot-password">Forgot password?</Link>
-        <Link to="/signup">Need an account?</Link>
+        <Link to="/profile/me/settings?mode=signup">Need an account?</Link>
       </div>
     </div>
   )
