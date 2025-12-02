@@ -25,7 +25,7 @@
 .topBar {
   width: 100%;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
   margin-bottom: 0.75rem;
 }

@@ -78,9 +78,9 @@ export const BookmarkIcon = (props: BaseIconProps) => (
 
 export const ShareIcon = (props: BaseIconProps) => (
   <SvgIcon stroke="currentColor" fill="none" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <path d="M9 7H7a4 4 0 0 0 0 8h2" />
-    <path d="M15 7h2a4 4 0 0 1 0 8h-2" />
-    <line x1="8" y1="12" x2="16" y2="12" />
+    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+    <polyline points="16 6 12 2 8 6" />
+    <line x1="12" y1="2" x2="12" y2="15" />
   </SvgIcon>
 )
 
@@ -167,6 +167,8 @@ export const SvgExitCircle = (props: ImgIconProps) => <ImgIcon src="/media/icons
 export const SvgPerson = (props: ImgIconProps) => <ImgIcon src="/media/icons/icons8-person.svg" alt="Profile" {...props} />
 export const SvgInbox = (props: ImgIconProps) => <ImgIcon src="/media/icons/icons8-inbox.svg" alt="Inbox" {...props} />
 export const SvgDiscover = (props: ImgIconProps) => <ImgIcon src="/media/icons/icons8-discover.svg" alt="Discover" {...props} />
+export const SvgBack = (props: ImgIconProps) => <ImgIcon src="/media/icons/icons8-back-arrow.svg" alt="Back" {...props} />
+export const SvgShare = (props: ImgIconProps) => <ImgIcon src="/media/icons/icons8-share.svg" alt="Share" {...props} />
 
 export const MessageSendIcon = (props: BaseIconProps) => (
   <svg width={props.width || 35} height={props.height || 35} viewBox="0 0 35 35" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>

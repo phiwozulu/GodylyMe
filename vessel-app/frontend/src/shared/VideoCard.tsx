@@ -228,16 +228,15 @@ export default function VideoCard({
             <span className={styles.handle}>{handle}</span>
             {video.user.churchHome && <span className={styles.church}>{video.user.churchHome}</span>}
           </button>
-          {onFollow ? (
+          {onFollow && !isFollowing ? (
             <button
               type="button"
-              className={`${styles.followButton} ${isFollowing ? styles.followButtonActive : ""}`}
+              className={styles.followButton}
               onClick={() => onFollow(video)}
-              aria-pressed={isFollowing}
               disabled={followBusy}
               aria-busy={followBusy}
             >
-              {followBusy ? (isFollowing ? "Unfollowing..." : "Following...") : isFollowing ? "Following" : "Follow"}
+              {followBusy ? "Following..." : "Follow"}
             </button>
           ) : null}
         </div>

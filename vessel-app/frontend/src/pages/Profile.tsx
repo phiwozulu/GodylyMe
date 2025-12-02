@@ -9,6 +9,7 @@ import {
   THUMBNAIL_PLACEHOLDER,
 } from "../services/contentService"
 import { formatLikes } from "../services/mockData"
+import { SvgBack, SvgShare } from "../shared/icons"
 import styles from "./Profile.module.css"
 
 type TabKey = "videos" | "liked" | "saved"
@@ -90,9 +91,17 @@ export default function Profile() {
     [navigate]
   )
 
-  const headerAction = isSelf
+  const goBack = React.useCallback(() => {
+    navigate(-1)
+  }, [navigate])
+
+  const headerLeftAction = isSelf
+    ? null
+    : { label: "Go back", icon: <SvgBack width={22} height={22} />, onClick: goBack }
+
+  const headerRightAction = isSelf
     ? { label: "Open profile settings", icon: "\u2699", onClick: () => openSettings() }
-    : { label: "Copy profile link", icon: "\u2934", onClick: copyProfileLink }
+    : { label: "Copy profile link", icon: <SvgShare width={22} height={22} />, onClick: copyProfileLink }
 
   React.useEffect(() => { 
     if (!targetId) return
@@ -376,14 +385,29 @@ export default function Profile() {
     <div className={styles.profile}>
       <div className={styles.profileCard}>
         <header className={styles.topBar}>
-          <div />
+          {headerLeftAction ? (
+            <button
+              type="button"
+              className={styles.headerButton}
+              onClick={headerLeftAction.onClick}
+              aria-label={headerLeftAction.label}
+            >
+              {headerLeftAction.icon}
+            </button>
+          ) : (
+            <div />
+          )}
           <button
             type="button"
             className={styles.headerButton}
-            onClick={headerAction.onClick}
-            aria-label={headerAction.label}
+            onClick={headerRightAction.onClick}
+            aria-label={headerRightAction.label}
           >
-            <span aria-hidden="true">{headerAction.icon}</span>
+            {typeof headerRightAction.icon === 'string' ? (
+              <span aria-hidden="true">{headerRightAction.icon}</span>
+            ) : (
+              headerRightAction.icon
+            )}
           </button>
         </header>
 
