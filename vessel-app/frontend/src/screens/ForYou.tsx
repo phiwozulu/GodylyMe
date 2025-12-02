@@ -14,13 +14,13 @@ type Props = {
 
 const offlineClip: Video = {
   id: "offline-demo",
-  title: "We’re reconnecting — enjoy this preview clip",
+  title: "We're reconnecting — enjoy this preview clip",
   description: "This sample video shows while we reconnect to the server. Once the backend is up, your feed will appear here.",
   user: {
-    id: "godlyme",
-    handle: "godlyme",
-    name: "Godlyme",
-    churchHome: "Preview channel",
+    id: "preview-channel",
+    handle: "preview",
+    name: "Preview Channel",
+    churchHome: "GodlyMe",
   },
   // Offline placeholder uses the logo animation video served from /public
   videoUrl: "/media/logo-video/logo%20animation1.mp4",
@@ -28,12 +28,12 @@ const offlineClip: Video = {
   category: "testimony",
   tags: ["faith", "hope", "inspiration"],
   durationSec: 62,
-  likes: 1280,
-  likesDisplay: "1.2K",
-  comments: 240,
-  bookmarks: 96,
-  donations: 12,
-  shares: 32,
+  likes: 0,
+  likesDisplay: "0",
+  comments: 0,
+  bookmarks: 0,
+  donations: 0,
+  shares: 0,
   publishedAt: new Date().toISOString(),
 }
 

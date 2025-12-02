@@ -4,8 +4,10 @@
   "private": true,
   "dependencies": {
     "@types/busboy": "^1.5.4",
+    "@vercel/blob": "^2.0.0",
     "@vercel/node": "^3.0.0",
     "bcryptjs": "^2.4.3",
+    "busboy": "^1.6.0",
     "ioredis": "^5.4.2",
     "jsonwebtoken": "^9.0.2",
     "nodemailer": "^6.9.14",
