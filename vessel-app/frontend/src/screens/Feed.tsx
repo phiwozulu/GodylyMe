@@ -80,6 +80,7 @@ export default function Feed() {
 
   const activeTab = tabs.find((item) => item.id === tab) ?? tabs[0]
   const isFriends = tab === 'friends'
+  const isPrayer = tab === 'prayer'
 
   const handleLogoRefresh = React.useCallback(() => {
     setTab('forYou')
@@ -272,7 +273,50 @@ export default function Feed() {
       </div>
 
       <div className={styles.scroller}>
-        {tab === 'following' ? <Following /> : isFriends ? <Friends /> : <ForYou filter={activeTab.filter} refreshKey={refreshToken} />}
+        {isPrayer ? (
+          <div className={styles.prayerWrap}>
+            <div className={styles.prayerCards}>
+              <div className={`${styles.prayerCard} ${styles.prayerCardDark}`}>
+                <span className={styles.prayerLabel}>Prayer feed</span>
+                <h2 className={styles.prayerTitle}>This feature is coming soon</h2>
+                <p className={styles.prayerText}>
+                  We are crafting a dedicated space for prayer requests, live intercession, and community encouragement.
+                  Thanks for journeying with us while it is built.
+                </p>
+              </div>
+
+              <div className={`${styles.prayerCard} ${styles.prayerCardLight}`}>
+                <div className={styles.prayerLabelRow}>
+                  <span className={styles.prayerLabel}>Support the build</span>
+                  <span className={styles.prayerPill}>Building together</span>
+                </div>
+                <h2 className={styles.prayerTitle}>Donate to help this app grow faster</h2>
+                <p className={styles.prayerText}>
+                  Your gift helps us launch prayer rooms, real-time requests, and guided devotion tools sooner for the
+                  whole community.
+                </p>
+                <div className={styles.prayerActions}>
+                  <button type="button" className={`${styles.prayerButton} ${styles.prayerButtonPrimary}`}>
+                    Donate now
+                  </button>
+                  <button type="button" className={styles.prayerButton}>
+                    Notify me
+                  </button>
+                </div>
+                <div className={styles.prayerFooter}>
+                  <strong>Prayer requests</strong>
+                  <span>- Live rooms - Guided intercession</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : tab === 'following' ? (
+          <Following />
+        ) : isFriends ? (
+          <Friends />
+        ) : (
+          <ForYou filter={activeTab.filter} refreshKey={refreshToken} />
+        )}
       </div>
     </div>
   )

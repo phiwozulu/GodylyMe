@@ -46,10 +46,15 @@ export default function Home() {
   const [isCommentsOpen, setIsCommentsOpen] = React.useState(false)
   const [isSearchOpen, setIsSearchOpen] = React.useState(false)
   const [activeTab, setActiveTab] = React.useState<TabId>('forYou')
+  const isPrayer = activeTab === 'prayer'
 
   React.useEffect(() => {
     let cancelled = false
     async function loadFeed() {
+      if (activeTab === 'prayer') {
+        setFeatured([])
+        return
+      }
 
       try {
         let feed: Video[] = []
@@ -89,6 +94,12 @@ export default function Home() {
       cancelled = true
     }
   }, [activeTab])
+
+  React.useEffect(() => {
+    if (isPrayer) {
+      setIsCommentsOpen(false)
+    }
+  }, [isPrayer])
 
   const heroVideo = featured[0] ?? null
   const heroBackground = heroVideo?.thumbnailUrl || FALLBACK_BACKDROP
@@ -171,9 +182,13 @@ export default function Home() {
   const savesDisplay = formatLikes(heroVideo?.bookmarks ?? 0)
 
   return (
-    <div className={styles.home}>
-      <div className={styles.backdrop} style={{ backgroundImage: `url(${heroBackground})` }} />
-      <div className={styles.backdropOverlay} />
+    <div className={`${styles.home} ${isPrayer ? styles.prayerMode : ''}`}>
+      {!isPrayer ? (
+        <>
+          <div className={styles.backdrop} style={{ backgroundImage: `url(${heroBackground})` }} />
+          <div className={styles.backdropOverlay} />
+        </>
+      ) : null}
 
       <div className={styles.screen}>
         <div className={styles.headerRow}>
@@ -196,7 +211,7 @@ export default function Home() {
           </div>
           <button
             type="button"
-            className={styles.searchButton}
+            className={`${styles.searchButton} ${isPrayer ? styles.prayerSearchButton : ''}`}
             onClick={() => {
               setShowResults(true)
               setIsSearchOpen(true)
@@ -314,31 +329,69 @@ export default function Home() {
           </div>
         ) : null}
 
-        <div className={styles.contentRow}>
-          <div className={styles.videoMeta}>
-            <div className={styles.creatorRow}>
-              <div className={styles.creatorAvatar}>
-                {heroVideo ? heroVideo.user.name.slice(0, 1).toUpperCase() : '?'}
-              </div>
-              <div>
-                <p className={styles.creatorHandle}>
-                  {heroVideo ? `@${heroVideo.user.id}` : '@creator'}
-                  <span className={styles.creatorChurch}>
-                    {heroVideo?.user.churchHome || heroVideo?.user.ministryRole || 'Vessel Community'}
-                  </span>
-                </p>
-                <p className={styles.creatorName}>{heroVideo?.user.name ?? 'Featured Creator'}</p>
-              </div>
-              <button type="button" className={styles.followButton}>
-                Follow
-              </button>
+        {isPrayer ? (
+          <div className={styles.prayerLayout}>
+            <div className={`${styles.prayerCard} ${styles.prayerCardDark}`}>
+              <span className={styles.prayerLabel}>Prayer feed</span>
+              <h2 className={styles.prayerTitle}>This feature is coming soon</h2>
+              <p className={styles.prayerText}>
+                We are crafting a dedicated space for prayer requests, live intercession, and community encouragement.
+                Thanks for journeying with us while it is built.
+              </p>
             </div>
-            <p className={styles.videoCategory}>{heroVideo?.category?.toUpperCase() ?? 'WORSHIP'}</p>
-            <h1 className={styles.videoTitle}>{heroVideo?.title ?? 'Sunrise Worship Session'}</h1>
-            <p className={styles.videoDescription}>{heroVideo?.description ?? 'An intimate moment of worship.'}</p>
-            <p className={styles.videoDescription}>
-              {heroVideo?.scripture?.reference ?? 'Psalms 113:3'}
-            </p>
+
+            <div className={`${styles.prayerCard} ${styles.prayerCardLight}`}>
+              <div className={styles.prayerLabelRow}>
+                <span className={styles.prayerLabel}>Support the build</span>
+                <span className={styles.prayerPill}>Building together</span>
+              </div>
+              <h2 className={styles.prayerTitle}>Donate to help this app grow faster</h2>
+              <p className={styles.prayerText}>
+                Your gift helps us launch prayer rooms, real-time requests, and guided devotion tools sooner for the
+                whole community.
+              </p>
+              <div className={styles.prayerActions}>
+                <button type="button" className={`${styles.prayerButton} ${styles.prayerButtonPrimary}`}>
+                  Donate now
+                </button>
+                <button type="button" className={styles.prayerButton}>
+                  Notify me
+                </button>
+              </div>
+              <div className={styles.prayerFooter}>
+                <strong>Prayer requests</strong>
+                <span>- Live rooms - Guided intercession</span>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {!isPrayer ? (
+          <div className={styles.contentRow}>
+            <div className={styles.videoMeta}>
+              <div className={styles.creatorRow}>
+                <div className={styles.creatorAvatar}>
+                  {heroVideo ? heroVideo.user.name.slice(0, 1).toUpperCase() : '?'}
+                </div>
+                <div>
+                  <p className={styles.creatorHandle}>
+                    {heroVideo ? `@${heroVideo.user.id}` : '@creator'}
+                    <span className={styles.creatorChurch}>
+                      {heroVideo?.user.churchHome || heroVideo?.user.ministryRole || 'Vessel Community'}
+                    </span>
+                  </p>
+                  <p className={styles.creatorName}>{heroVideo?.user.name ?? 'Featured Creator'}</p>
+                </div>
+                <button type="button" className={styles.followButton}>
+                  Follow
+                </button>
+              </div>
+              <p className={styles.videoCategory}>{heroVideo?.category?.toUpperCase() ?? 'WORSHIP'}</p>
+              <h1 className={styles.videoTitle}>{heroVideo?.title ?? 'Sunrise Worship Session'}</h1>
+              <p className={styles.videoDescription}>{heroVideo?.description ?? 'An intimate moment of worship.'}</p>
+              <p className={styles.videoDescription}>
+                {heroVideo?.scripture?.reference ?? 'Psalms 113:3'}
+              </p>
           </div>
 
           <div className={styles.actionRail}>
@@ -372,6 +425,7 @@ export default function Home() {
             </button>
           </div>
         </div>
+        ) : null}
 
       </div>
 

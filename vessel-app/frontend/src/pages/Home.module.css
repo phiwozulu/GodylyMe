@@ -31,6 +31,33 @@
   padding: 2rem clamp(1rem, 5vw, 3rem) clamp(5rem, 8vw, 6rem);
 }
 
+.prayerMode {
+  background: radial-gradient(circle at 20% 20%, #f6f4ed 0%, #eeede5 40%, #e7e4da 100%);
+  color: #1f1a14;
+}
+
+.prayerMode .screen {
+  justify-content: flex-start;
+  padding-top: clamp(1.75rem, 4vw, 2.75rem);
+  padding-bottom: clamp(4rem, 10vh, 6rem);
+}
+
+.prayerMode .tabGroup {
+  background: #ebe5d7;
+  border-color: #ebe5d7;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+.prayerMode .tab {
+  color: #2d271d;
+}
+
+.prayerMode .tabActive {
+  background: #192017;
+  color: #f8f7f2;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4), 0 10px 22px rgba(0, 0, 0, 0.1);
+}
+
 .headerRow {
   display: flex;
   align-items: center;
@@ -104,6 +131,13 @@
   cursor: pointer;
   backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.prayerSearchButton {
+  background: rgba(0, 0, 0, 0.06);
+  color: #1f1a14;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
 }
 
 .searchBar {
@@ -181,6 +215,113 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: 2rem;
+}
+
+.prayerLayout {
+  margin-top: clamp(2rem, 5vw, 3rem);
+  display: grid;
+  gap: clamp(1rem, 3vw, 1.75rem);
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  align-items: stretch;
+}
+
+.prayerCard {
+  border-radius: 18px;
+  padding: clamp(1.25rem, 3vw, 1.9rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.14);
+}
+
+.prayerCardDark {
+  background: #11171c;
+  color: #f5f6f1;
+  border-color: #1c242b;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
+}
+
+.prayerCardLight {
+  background: #f8f7f3;
+  color: #18130d;
+  border-color: #e5e2d9;
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.1);
+}
+
+.prayerLabel {
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.78rem;
+  opacity: 0.75;
+}
+
+.prayerLabelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.prayerPill {
+  padding: 0.35rem 0.8rem;
+  background: #e3e8d8;
+  color: #2f3a23;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.82rem;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+}
+
+.prayerTitle {
+  margin: 0;
+  font-size: clamp(1.5rem, 1rem + 1vw, 1.9rem);
+}
+
+.prayerText {
+  margin: 0;
+  line-height: 1.6;
+  color: rgba(24, 19, 13, 0.9);
+}
+
+.prayerCardDark .prayerText {
+  color: rgba(245, 246, 241, 0.84);
+}
+
+.prayerActions {
+  display: flex;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  margin-top: 0.35rem;
+}
+
+.prayerButton {
+  border-radius: 14px;
+  padding: 0.75rem 1.1rem;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: #ebe8df;
+  color: #1d1a12;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.06);
+}
+
+.prayerButtonPrimary {
+  background: linear-gradient(135deg, #6d7d5b 0%, #556343 100%);
+  color: #f7f7f2;
+  border-color: #5b6b50;
+  box-shadow: 0 10px 24px rgba(53, 68, 43, 0.32);
+}
+
+.prayerFooter {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.95rem;
+  color: rgba(24, 19, 13, 0.7);
+}
+.prayerCardDark .prayerFooter {
+  color: rgba(245, 246, 241, 0.82);
 }
 
 .videoMeta {
@@ -597,6 +738,10 @@
 @media (max-width: 720px) {
   .screen {
     padding: 2rem 1.25rem 5.5rem;
+  }
+
+  .prayerLayout {
+    grid-template-columns: 1fr;
   }
 
   .contentRow {
