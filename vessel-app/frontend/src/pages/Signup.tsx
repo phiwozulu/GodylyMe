@@ -81,7 +81,7 @@ export default function Signup() {
 
   return (
     <div className={styles.signup}>
-      <h1>Create your Vessel profile</h1>
+      <h1>Create your GodlyMe profile</h1>
       <p>Choose a display name so your worship moments and testimonies are linked to you.</p>
       <form className={styles.form} onSubmit={submit}>
         <label>

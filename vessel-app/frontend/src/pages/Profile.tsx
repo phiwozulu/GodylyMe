@@ -347,7 +347,7 @@ export default function Profile() {
 
   const handleDeleteClip = React.useCallback(
     async (clip: Video) => {
-      const confirmed = window.confirm(`Delete "${clip.title}" from Vessel?`)
+      const confirmed = window.confirm(`Delete "${clip.title}" from GodlyMe?`)
       if (!confirmed) return
       try {
         await contentService.deleteUpload(clip.id)

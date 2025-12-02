@@ -54,7 +54,7 @@ export default function Upload() {
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     if (!file) {
-      alert('Pick a video to share with the Vessel community.')
+      alert('Pick a video to share with the GodlyMe community.')
       return
     }
 

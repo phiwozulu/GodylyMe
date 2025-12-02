@@ -448,7 +448,7 @@ function requireVerifiedSession(action: string): void {
   }
   const profile = getActiveProfile()
   if (!profile.isVerified) {
-    throw new Error(`Only verified Vessel profiles can ${action}.`)
+    throw new Error(`Only verified GodlyMe profiles can ${action}.`)
   }
 }
 
@@ -1140,7 +1140,7 @@ function mapApiSuggestedConnection(user: ApiSuggestedConnection): SuggestedConne
     user.summary ??
     (user.church && user.country
       ? `${user.church} • ${user.country}`
-      : user.church ?? user.country ?? 'Active on Vessel')
+      : user.church ?? user.country ?? 'Active on GodlyMe')
   return {
     id: user.id,
     handle: user.handle || user.id,
@@ -1232,7 +1232,7 @@ function buildLocalSuggestions(limit: number): SuggestedConnection[] {
         church: info.church ?? null,
         country: null,
         photoUrl: info.photo ?? null,
-        summary: info.church || 'Active on Vessel',
+        summary: info.church || 'Active on GodlyMe',
         mutualConnections,
       },
     })
@@ -1557,7 +1557,7 @@ export const contentService = {
       return false
     }
     if (!hasAuthSession()) {
-      throw new Error('Sign in to follow creators on Vessel.')
+      throw new Error('Sign in to follow creators on GodlyMe.')
     }
     await postJson(`/api/follows/${encodeURIComponent(normalized)}`, {}, true)
     ensureFollowingHydrated()
@@ -1762,7 +1762,7 @@ export const contentService = {
     const normalizedName = (activeProfile.name || '').trim().toLowerCase()
     const isGuestProfile = normalizedId === 'guest' || normalizedName === 'guest creator' || !activeProfile.email
     if (isGuestProfile) {
-      throw new Error('Sign in to your Vessel profile before uploading a video.')
+      throw new Error('Sign in to your GodlyMe profile before uploading a video.')
     }
     enforceModeration(MODERATION_CONTEXT_UPLOAD, [
       { label: 'Title', text: input.title },
