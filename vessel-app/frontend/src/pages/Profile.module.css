@@ -305,6 +305,7 @@
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   z-index: 15;
+  overflow-y: auto;
 }
 
 .settingsPanel {
@@ -313,6 +314,8 @@
   gap: 1.1rem;
   padding: clamp(1.05rem, 3.2vw, 1.55rem);
   width: min(540px, 94vw);
+  max-height: 90vh;
+  overflow-y: auto;
   border-radius: 22px;
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.14);

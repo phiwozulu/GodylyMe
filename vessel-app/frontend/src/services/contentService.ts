@@ -1562,7 +1562,9 @@ export const contentService = {
     return signOutToGuest()
   },
   async deleteAccount() {
-    requireVerifiedSession('delete your account')
+    if (!hasAuthSession()) {
+      throw new Error('Sign in to delete your account.')
+    }
     await deleteJson('/api/profile/delete-account', true)
     setStoredAuthToken(null)
     return signOutToGuest()
