@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { compose, cors, errorHandler, requireAuth } from '../_lib/serverless'
 import { getPgPool } from '../_lib/clients'
 import { initDatabase } from '../_lib/initDatabase'
+import { put } from '@vercel/blob'
 import Busboy from 'busboy'
 
 async function handler(req: VercelRequest, res: VercelResponse) {
@@ -22,23 +23,25 @@ async function handleUpload(req: VercelRequest, res: VercelResponse) {
 
   try {
     const fields: Record<string, string> = {}
+    let videoFile: { buffer: Buffer; filename: string; mimetype: string } | null = null
+    let thumbnailFile: { buffer: Buffer; filename: string; mimetype: string } | null = null
 
     // Get raw body from Vercel request
     const rawBody = (req as any).body
 
-    // If body is already parsed as an object, use it directly
+    // Check if it's JSON (no file upload)
     if (rawBody && typeof rawBody === 'object' && !Buffer.isBuffer(rawBody)) {
-      const { title, description, videoUrl, thumbnailUrl, category } = rawBody
+      const { title, description, videoUrl, thumbnailUrl, category, tags } = rawBody
 
       if (!title || !title.trim()) {
         return res.status(400).json({ message: 'Title is required' })
       }
 
-      // Use the parsed data
+      // Use provided URLs or placeholders
       const finalVideoUrl = videoUrl || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
       const finalThumbnailUrl = thumbnailUrl || 'https://picsum.photos/seed/video/640/360'
 
-      // Generate a text ID for the video (matching existing schema)
+      // Generate a text ID for the video
       const videoId = `video_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
       // Insert video into database
@@ -46,7 +49,7 @@ async function handleUpload(req: VercelRequest, res: VercelResponse) {
         INSERT INTO videos (id, user_id, title, description, video_url, thumbnail_url, category, tags, duration_seconds, created_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
         RETURNING id, user_id, title, description, video_url, thumbnail_url, category, tags, duration_seconds, created_at
-      `, [videoId, userId, title.trim(), description || null, finalVideoUrl, finalThumbnailUrl, category || 'general', [], 0])
+      `, [videoId, userId, title.trim(), description || null, finalVideoUrl, finalThumbnailUrl, category || 'general', tags || [], 0])
 
       const video = result.rows[0]
 
@@ -81,46 +84,95 @@ async function handleUpload(req: VercelRequest, res: VercelResponse) {
       })
     }
 
-    // Otherwise try busboy parsing
-    await new Promise((resolve, reject) => {
+    // Handle multipart/form-data file upload
+    await new Promise<void>((resolve, reject) => {
       const busboy = Busboy({ headers: req.headers as any })
+      const chunks: Buffer[] = []
+      let currentField: string | null = null
 
       busboy.on('field', (fieldname: string, value: string) => {
         fields[fieldname] = value
       })
 
-      busboy.on('finish', resolve)
-      busboy.on('error', reject)
+      busboy.on('file', (fieldname: string, file: NodeJS.ReadableStream, info: { filename: string; encoding: string; mimeType: string }) => {
+        currentField = fieldname
+        const fileChunks: Buffer[] = []
+
+        file.on('data', (data: Buffer) => {
+          fileChunks.push(data)
+        })
+
+        file.on('end', () => {
+          const buffer = Buffer.concat(fileChunks)
+
+          if (fieldname === 'video') {
+            videoFile = { buffer, filename: info.filename, mimetype: info.mimeType }
+          } else if (fieldname === 'thumbnail') {
+            thumbnailFile = { buffer, filename: info.filename, mimetype: info.mimeType }
+          }
+        })
+      })
+
+      busboy.on('finish', () => resolve())
+      busboy.on('error', (err: Error) => reject(err))
 
       // Write body to busboy
       if (Buffer.isBuffer(rawBody)) {
         busboy.write(rawBody)
+        busboy.end()
+      } else if (typeof rawBody === 'string') {
+        busboy.write(Buffer.from(rawBody))
         busboy.end()
       } else {
         reject(new Error('Unable to parse request body'))
       }
     })
 
-    const { title, description, videoUrl, thumbnailUrl, category } = fields
+    const { title, description, category, tags } = fields
 
     if (!title || !title.trim()) {
       return res.status(400).json({ message: 'Title is required' })
     }
 
-    // For now, we'll store the placeholder URLs
-    // In production, you'd upload to S3/Cloudinary and get real URLs
-    const finalVideoUrl = videoUrl || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
-    const finalThumbnailUrl = thumbnailUrl || 'https://picsum.photos/seed/video/640/360'
+    if (!videoFile) {
+      return res.status(400).json({ message: 'Video file is required' })
+    }
 
-    // Generate a text ID for the video (matching existing schema)
+    // Upload video to Vercel Blob
+    const videoBlob = await put(`videos/${userId}/${Date.now()}_${videoFile.filename}`, videoFile.buffer, {
+      access: 'public',
+      contentType: videoFile.mimetype,
+    })
+
+    // Upload thumbnail if provided
+    let thumbnailUrl = 'https://picsum.photos/seed/video/640/360'
+    if (thumbnailFile) {
+      const thumbnailBlob = await put(`thumbnails/${userId}/${Date.now()}_${thumbnailFile.filename}`, thumbnailFile.buffer, {
+        access: 'public',
+        contentType: thumbnailFile.mimetype,
+      })
+      thumbnailUrl = thumbnailBlob.url
+    }
+
+    // Generate a text ID for the video
     const videoId = `video_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
-    // Insert video into database (existing schema uses TEXT id, category, tags, duration_seconds)
+    // Parse tags if provided as JSON string
+    let parsedTags: string[] = []
+    if (tags) {
+      try {
+        parsedTags = JSON.parse(tags)
+      } catch {
+        parsedTags = tags.split(',').map((t: string) => t.trim()).filter(Boolean)
+      }
+    }
+
+    // Insert video into database
     const result = await pool.query(`
       INSERT INTO videos (id, user_id, title, description, video_url, thumbnail_url, category, tags, duration_seconds, created_at)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
       RETURNING id, user_id, title, description, video_url, thumbnail_url, category, tags, duration_seconds, created_at
-    `, [videoId, userId, title.trim(), description || null, finalVideoUrl, finalThumbnailUrl, category || 'general', [], 0])
+    `, [videoId, userId, title.trim(), description || null, videoBlob.url, thumbnailUrl, category || 'general', parsedTags, 0])
 
     const video = result.rows[0]
 
