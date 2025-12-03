@@ -27,6 +27,11 @@ async function handler(req: VercelRequest, res: VercelResponse) {
 
     const targetUserId = userResult.rows[0].id
 
+    // Prevent following yourself
+    if (targetUserId === userId) {
+      return res.status(400).json({ message: 'Cannot follow yourself' })
+    }
+
     if (req.method === 'POST') {
       // Follow user
       await pool.query(`
@@ -35,13 +40,11 @@ async function handler(req: VercelRequest, res: VercelResponse) {
         ON CONFLICT (follower_id, following_id) DO NOTHING
       `, [userId, targetUserId])
 
-      // Create notification (skip if following yourself)
-      if (targetUserId !== userId) {
-        await pool.query(`
-          INSERT INTO notifications (user_id, type, actor_id)
-          VALUES ($1, 'follow', $2)
-        `, [targetUserId, userId])
-      }
+      // Create notification
+      await pool.query(`
+        INSERT INTO notifications (user_id, type, actor_id)
+        VALUES ($1, 'follow', $2)
+      `, [targetUserId, userId])
 
       res.json({ message: 'Followed successfully' })
     } else if (req.method === 'DELETE') {

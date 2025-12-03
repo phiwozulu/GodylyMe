@@ -211,6 +211,8 @@ export default function Friends() {
         <div className={styles.track} ref={trackRef} onScroll={handleScroll} onKeyDown={handleKey} tabIndex={0}>
           {filteredClips.map((clip, clipIndex) => {
             const userId = resolveUserId(clip)
+            const currentUser = contentService.getActiveProfile()
+            const isOwnVideo = currentUser.id === userId || currentUser.id === clip.user.id
             const isFollowingCreator = contentService.isFollowing(userId)
             const busy = followLoading === userId
             const isActive = clipIndex === index
@@ -235,7 +237,7 @@ export default function Friends() {
                       })
                     }
                   }}
-                  onFollow={() => handleFollowAction(clip)}
+                  onFollow={isOwnVideo ? undefined : () => handleFollowAction(clip)}
                   onDonate={() => setDonateClip(clip)}
                   onAuthorClick={() => openProfile(clip)}
                   isFollowing={isFollowingCreator}

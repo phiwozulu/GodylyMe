@@ -261,6 +261,8 @@ export default function ForYou({ filter, refreshKey }: Props) {
         >
           {visibleClips.map((clip, clipIndex) => {
             const userId = resolveUserId(clip)
+            const currentUser = contentService.getActiveProfile()
+            const isOwnVideo = currentUser.id === userId || currentUser.id === clip.user.id
             const isFollowingCreator = contentService.isFollowing(userId)
             const busy = followLoading === userId
             const isActive = clipIndex === index
@@ -286,7 +288,7 @@ export default function ForYou({ filter, refreshKey }: Props) {
                     }
                   }}
                   onDonate={() => setDonateClip(clip)}
-                  onFollow={() => handleFollowAction(clip)}
+                  onFollow={isOwnVideo ? undefined : () => handleFollowAction(clip)}
                   followBusy={busy}
                   isBookmarked={contentService.isBookmarked(clip.id)}
                   isLiked={contentService.isLiked(clip.id)}
