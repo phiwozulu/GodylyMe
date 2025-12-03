@@ -33,6 +33,7 @@ export default function Following() {
 
   React.useEffect(() => {
     let mounted = true
+    let pollInterval: NodeJS.Timeout | null = null
 
     async function load() {
       const data = await contentService.fetchFollowingFeed()
@@ -48,6 +49,33 @@ export default function Following() {
       }
     }
 
+    async function pollForNewContent() {
+      if (!mounted) return
+      try {
+        const data = await contentService.fetchFollowingFeed()
+        if (mounted && data.length) {
+          const currentUser = contentService.getActiveProfile()
+          const filtered = data.filter((clip) => {
+            const userId = resolveUserId(clip)
+            return currentUser.id !== userId && currentUser.id !== clip.user.id
+          })
+          setClips((current) => {
+            // Only add new videos that aren't already in the feed
+            const existingIds = new Set(current.map(v => v.id))
+            const newVideos = filtered.filter(v => !existingIds.has(v.id))
+            if (newVideos.length > 0) {
+              // Add new videos to the end of the feed
+              return [...current, ...newVideos]
+            }
+            return current
+          })
+        }
+      } catch (err) {
+        // Silently fail on polling errors
+        console.debug('Poll failed:', err)
+      }
+    }
+
     // Initial
     load()
     const unsubscribe = contentService.subscribe(() => {
@@ -56,8 +84,13 @@ export default function Following() {
       // Also reload feed data
       load()
     })
+
+    // Poll for new content every 30 seconds
+    pollInterval = setInterval(pollForNewContent, 30000)
+
     return () => {
       mounted = false
+      if (pollInterval) clearInterval(pollInterval)
       unsubscribe()
       if (rafRef.current !== null) {
         cancelAnimationFrame(rafRef.current)
