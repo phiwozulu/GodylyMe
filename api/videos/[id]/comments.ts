@@ -1,12 +1,20 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { compose, cors, errorHandler, requireAuth } from '../../_lib/serverless'
+import { compose, cors, errorHandler } from '../../_lib/serverless'
 import { getPgPool } from '../../_lib/clients'
 import { initDatabase } from '../../_lib/initDatabase'
+import * as jwt from 'jsonwebtoken'
+
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET
+  if (!secret) {
+    throw new Error('JWT_SECRET is not configured')
+  }
+  return secret
+}
 
 async function handler(req: VercelRequest, res: VercelResponse) {
   await initDatabase()
 
-  const userId = (req as any).userId
   const { id } = req.query
   const pool = getPgPool()
 
@@ -15,8 +23,24 @@ async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (req.method === 'POST') {
+    // POST requires authentication
+    const authHeader = req.headers.authorization
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ message: 'Missing or invalid authorization header' })
+    }
+
+    const token = authHeader.substring(7)
+    let userId: string
+    try {
+      const payload = jwt.verify(token, getJwtSecret()) as { sub: string }
+      userId = payload.sub
+    } catch (error) {
+      return res.status(401).json({ message: 'Invalid or expired token' })
+    }
+
     return handlePostComment(req, res, id as string, userId, pool)
   } else if (req.method === 'GET') {
+    // GET does not require authentication
     return handleGetComments(req, res, id as string, pool)
   } else {
     return res.status(405).json({ message: 'Method not allowed' })
@@ -136,4 +160,4 @@ async function handleGetComments(
   }
 }
 
-export default compose(cors, errorHandler, requireAuth)(handler)
+export default compose(cors, errorHandler)(handler)
