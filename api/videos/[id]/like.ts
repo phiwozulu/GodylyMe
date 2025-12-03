@@ -69,7 +69,11 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     }
   } catch (error) {
     console.error('Error managing video like:', error)
-    throw error
+    const message = error instanceof Error ? error.message : 'Failed to update like status'
+    return res.status(500).json({
+      message,
+      error: process.env.NODE_ENV === 'development' ? String(error) : undefined
+    })
   }
 }
 
