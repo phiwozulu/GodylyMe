@@ -272,8 +272,29 @@ export default function Friends() {
           })}
         </div>
       </div>
-      <CommentSheet clip={commentClip} onClose={() => setCommentClip(null)} />
-      <DonateSheet clip={donateClip} onClose={() => setDonateClip(null)} />
+      {commentClip ? (
+        <CommentSheet
+          clip={commentClip}
+          onClose={async () => {
+            setCommentClip(null)
+            // Refetch feed to get updated counts
+            try {
+              const [followingProfiles, followerProfiles, followingFeed] = await Promise.all([
+                contentService.fetchFollowingProfiles(),
+                contentService.fetchFollowerProfiles(),
+                contentService.fetchFollowingFeed(),
+              ])
+              setMutualAccounts(buildMutualAccountSet(followingProfiles ?? [], followerProfiles ?? []))
+              setMutualHandles(buildMutualHandleSet(followingProfiles ?? [], followerProfiles ?? []))
+              setClips(followingFeed ?? [])
+            } catch (err) {
+              // Ignore errors, keep existing data
+            }
+            setUpdateTrigger(prev => prev + 1)
+          }}
+        />
+      ) : null}
+      {donateClip ? <DonateSheet clip={donateClip} onClose={() => setDonateClip(null)} /> : null}
     </>
   )
 }

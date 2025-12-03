@@ -317,7 +317,18 @@ export default function ForYou({ filter, refreshKey }: Props) {
           })}
         </div>
       </div>
-      {commentClip ? <CommentSheet clip={commentClip} onClose={() => setCommentClip(null)} /> : null}
+      {commentClip ? (
+        <CommentSheet
+          clip={commentClip}
+          onClose={async () => {
+            setCommentClip(null)
+            // Refetch feed to get updated counts
+            const data = await contentService.fetchForYouFeed()
+            setClips(data.length ? data : clips)
+            setUpdateTrigger(prev => prev + 1)
+          }}
+        />
+      ) : null}
       {donateClip ? <DonateSheet clip={donateClip} onClose={() => setDonateClip(null)} /> : null}
     </>
   )
