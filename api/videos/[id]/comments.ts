@@ -100,7 +100,7 @@ async function handlePostComment(
     res.json({
       comment: {
         id: commentId,
-        content: content.trim(),
+        body: content.trim(),
         user: {
           id: user.id,
           handle: user.handle,
@@ -129,7 +129,7 @@ async function handleGetComments(
     const result = await pool.query(`
       SELECT
         vc.id,
-        COALESCE(vc.body, vc.content) as content,
+        COALESCE(vc.body, vc.content) as body,
         vc.created_at,
         u.id as user_id,
         u.handle,
@@ -144,7 +144,7 @@ async function handleGetComments(
 
     const comments = result.rows.map((row: any) => ({
       id: row.id,
-      content: row.content,
+      body: row.body,
       user: {
         id: row.user_id,
         handle: row.handle,
