@@ -78,20 +78,16 @@ export default function Following() {
 
     // Initial
     load()
-<<<<<<< Updated upstream
     const unsubscribe = contentService.subscribe(() => {
       // Trigger immediate re-render for bookmark/like changes
       setUpdateTrigger(prev => prev + 1)
       // Also reload feed data
       load()
     })
-=======
-    const unsubscribe = contentService.subscribe(load)
 
     // Poll for new content every 30 seconds
     pollInterval = setInterval(pollForNewContent, 30000)
 
->>>>>>> Stashed changes
     return () => {
       mounted = false
       if (pollInterval) clearInterval(pollInterval)
