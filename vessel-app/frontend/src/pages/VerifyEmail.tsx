@@ -36,9 +36,10 @@ export default function VerifyEmail() {
     setBusy(true)
     try {
       await contentService.verifyEmailCode(trimmedEmail, trimmedCode)
-      setStatus("Email verified! Redirecting to sign in...")
+      setStatus("Email verified! Your account is now active.")
       setError(null)
-      window.setTimeout(() => navigate("/login"), 1400)
+      // Redirect to profile page instead of login since they're already authenticated
+      window.setTimeout(() => navigate("/profile/me"), 1400)
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unable to verify that code right now."
       setError(message)
