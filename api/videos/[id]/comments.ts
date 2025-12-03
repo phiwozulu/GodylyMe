@@ -144,6 +144,7 @@ async function handleGetComments(
 
     const comments = result.rows.map((row: any) => ({
       id: row.id,
+      videoId: videoId,
       body: row.body,
       user: {
         id: row.user_id,

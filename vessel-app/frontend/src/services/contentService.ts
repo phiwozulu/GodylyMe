@@ -2059,11 +2059,21 @@ export const contentService = {
     if (!trimmedId) {
       return []
     }
-    const payload = await getJson<{ comments: ApiVideoComment[] }>(
-      `/api/videos/${encodeURIComponent(trimmedId)}/comments`,
-      false
-    )
-    return payload.comments.map(mapApiComment)
+    try {
+      const payload = await getJson<{ comments: ApiVideoComment[] }>(
+        `/api/videos/${encodeURIComponent(trimmedId)}/comments`,
+        false
+      )
+      // Check if payload and comments array exist
+      if (!payload || !payload.comments || !Array.isArray(payload.comments)) {
+        console.error('Invalid comments response:', payload)
+        return []
+      }
+      return payload.comments.map(mapApiComment)
+    } catch (error) {
+      console.error('Error fetching comments:', error)
+      return []
+    }
   },
   async recordComment(clipId: string, body: string): Promise<VideoComment> {
     requireVerifiedSession('comment on videos')
