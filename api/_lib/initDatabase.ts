@@ -84,10 +84,32 @@ export async function initDatabase(): Promise<void> {
     await pool.query('CREATE INDEX IF NOT EXISTS idx_videos_user_id ON videos(user_id);')
     await pool.query('CREATE INDEX IF NOT EXISTS idx_videos_created_at ON videos(created_at DESC);')
 
-    // 4. Video engagement tables - skip if already exist
-    // These tables already exist with the correct schema
+    // 4. Video engagement tables
+    // Drop and recreate to fix video_id type mismatch (was UUID, should be TEXT)
+    await pool.query('DROP TABLE IF EXISTS video_likes CASCADE;')
+    await pool.query(`
+      CREATE TABLE video_likes (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        video_id TEXT NOT NULL,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE(video_id, user_id)
+      );
+    `)
     await pool.query('CREATE INDEX IF NOT EXISTS idx_video_likes_video ON video_likes(video_id);')
     await pool.query('CREATE INDEX IF NOT EXISTS idx_video_likes_user ON video_likes(user_id);')
+
+    await pool.query('DROP TABLE IF EXISTS video_shares CASCADE;')
+    await pool.query(`
+      CREATE TABLE video_shares (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        video_id TEXT NOT NULL,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE(video_id, user_id)
+      );
+    `)
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_video_shares_video ON video_shares(video_id);')
     await pool.query('CREATE INDEX IF NOT EXISTS idx_video_comments_video ON video_comments(video_id);')
 
     // 5. Messaging tables
