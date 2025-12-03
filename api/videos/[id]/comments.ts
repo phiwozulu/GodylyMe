@@ -3,6 +3,7 @@ import { compose, cors, errorHandler } from '../../_lib/serverless'
 import { getPgPool } from '../../_lib/clients'
 import { initDatabase } from '../../_lib/initDatabase'
 import * as jwt from 'jsonwebtoken'
+import { randomUUID } from 'crypto'
 
 function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET
@@ -74,7 +75,7 @@ async function handlePostComment(
     const videoOwnerId = videoResult.rows[0].user_id
 
     // Insert comment
-    const commentId = `comment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    const commentId = randomUUID()
     await pool.query(`
       INSERT INTO video_comments (id, video_id, user_id, content, created_at)
       VALUES ($1, $2, $3, $4, NOW())
