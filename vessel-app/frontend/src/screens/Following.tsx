@@ -36,13 +36,19 @@ export default function Following() {
     async function load() {
       const data = await contentService.fetchFollowingFeed()
       if (mounted) {
-        setClips(data)
+        const currentUser = contentService.getActiveProfile()
+        // Filter out user's own videos from Following feed
+        const filtered = data.filter((clip) => {
+          const userId = resolveUserId(clip)
+          return currentUser.id !== userId && currentUser.id !== clip.user.id
+        })
+        setClips(filtered)
         setLoading(false)
       }
     }
 
     // Initial
-    load() 
+    load()
     const unsubscribe = contentService.subscribe(load)
     return () => {
       mounted = false

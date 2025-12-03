@@ -36,10 +36,15 @@ export default function Friends() {
 
   const filteredClips = React.useMemo(() => {
     if (!mutualAccounts.size && !mutualHandles.size) return []
+    const currentUser = contentService.getActiveProfile()
     return clips.filter((clip) => {
       const accountId = normalizeValue(clip.user.accountId || clip.user.id)
       const handle = normalizeHandle(clip.user.handle || clip.user.id)
-      return (accountId && mutualAccounts.has(accountId)) || (handle && mutualHandles.has(handle))
+      const userId = resolveUserId(clip)
+      // Filter out user's own videos and only include mutual connections
+      const isOwnVideo = currentUser.id === userId || currentUser.id === clip.user.id
+      const isMutual = (accountId && mutualAccounts.has(accountId)) || (handle && mutualHandles.has(handle))
+      return !isOwnVideo && isMutual
     })
   }, [clips, mutualAccounts, mutualHandles])
 

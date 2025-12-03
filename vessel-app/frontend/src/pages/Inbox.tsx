@@ -18,8 +18,6 @@ type SuggestedCard = SuggestedConnection & {
   isFollowing: boolean
 }
 
-const quickReplyOptions = ['Thanks so much!', "Let's schedule something.", 'Appreciate you sharing this.', 'Praying with you!']
-
 export default function Inbox() {
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
@@ -836,20 +834,6 @@ export default function Inbox() {
                             </div>
                           )
                         })}
-                      </div>
-
-                      <div className={styles.quickReplies}>
-                        {quickReplyOptions.map((reply) => (
-                          <button
-                            key={`${thread.id}-${reply}`}
-                            type="button"
-                            className={styles.quickReply}
-                            onClick={() => sendMessage(thread.id, reply)}
-                            disabled={isSending}
-                          >
-                            {reply}
-                          </button>
-                        ))}
                       </div>
 
                       <form
