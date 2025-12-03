@@ -57,6 +57,7 @@ export default function ForYou({ filter, refreshKey }: Props) {
   const [followLoading, setFollowLoading] = React.useState<string | null>(null)
   const [commentClip, setCommentClip] = React.useState<Video | null>(null)
   const [donateClip, setDonateClip] = React.useState<Video | null>(null)
+  const [updateTrigger, setUpdateTrigger] = React.useState(0)
   const navigate = useNavigate()
   const trackRef = React.useRef<HTMLDivElement | null>(null)
   const rafRef = React.useRef<number | null>(null)
@@ -74,7 +75,12 @@ export default function ForYou({ filter, refreshKey }: Props) {
     }
 
     loadFeed()
-    const unsubscribe = contentService.subscribe(loadFeed)
+    const unsubscribe = contentService.subscribe(() => {
+      // Trigger immediate re-render for bookmark/like changes
+      setUpdateTrigger(prev => prev + 1)
+      // Also reload feed data
+      loadFeed()
+    })
 
     return () => {
       mounted = false
@@ -203,7 +209,16 @@ export default function ForYou({ filter, refreshKey }: Props) {
 
   const handleBookmark = React.useCallback((clipId: string) => {
     try {
-      contentService.toggleBookmark(clipId)
+      const isBookmarked = contentService.toggleBookmark(clipId)
+      // Update local state immediately for responsive UI
+      setClips((current) =>
+        current.map((clip) =>
+          clip.id === clipId
+            ? { ...clip, bookmarks: isBookmarked ? (clip.bookmarks ?? 0) + 1 : Math.max(0, (clip.bookmarks ?? 0) - 1) }
+            : clip
+        )
+      )
+      setUpdateTrigger(prev => prev + 1)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Sign in to save videos for later.'
       window.alert(message)
@@ -218,6 +233,7 @@ export default function ForYou({ filter, refreshKey }: Props) {
           clip.id === clipId ? { ...clip, likes: result.count, likesDisplay: formatLikes(result.count) } : clip
         )
       )
+      setUpdateTrigger(prev => prev + 1)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'We could not register that like. Please try again.'
       window.alert(message)

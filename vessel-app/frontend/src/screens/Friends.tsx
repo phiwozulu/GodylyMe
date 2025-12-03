@@ -30,6 +30,7 @@ export default function Friends() {
   const [mutualAccounts, setMutualAccounts] = React.useState<Set<string>>(new Set())
   const [mutualHandles, setMutualHandles] = React.useState<Set<string>>(new Set())
   const [error, setError] = React.useState<string | null>(null)
+  const [updateTrigger, setUpdateTrigger] = React.useState(0)
   const navigate = useNavigate()
   const trackRef = React.useRef<HTMLDivElement | null>(null)
   const rafRef = React.useRef<number | null>(null)
@@ -84,7 +85,12 @@ export default function Friends() {
     }
 
     load()
-    const unsubscribe = contentService.subscribe(load)
+    const unsubscribe = contentService.subscribe(() => {
+      // Trigger immediate re-render for bookmark/like changes
+      setUpdateTrigger(prev => prev + 1)
+      // Also reload feed data
+      load()
+    })
     return () => {
       mounted = false
       unsubscribe()
@@ -169,7 +175,16 @@ export default function Friends() {
 
   const handleBookmark = React.useCallback((clipId: string) => {
     try {
-      contentService.toggleBookmark(clipId)
+      const isBookmarked = contentService.toggleBookmark(clipId)
+      // Update local state immediately for responsive UI
+      setClips((current) =>
+        current.map((clip) =>
+          clip.id === clipId
+            ? { ...clip, bookmarks: isBookmarked ? (clip.bookmarks ?? 0) + 1 : Math.max(0, (clip.bookmarks ?? 0) - 1) }
+            : clip
+        )
+      )
+      setUpdateTrigger(prev => prev + 1)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Sign in to save videos for later.'
       window.alert(message)
@@ -184,6 +199,7 @@ export default function Friends() {
           clip.id === clipId ? { ...clip, likes: result.count, likesDisplay: formatLikes(result.count) } : clip
         )
       )
+      setUpdateTrigger(prev => prev + 1)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'We could not register that like. Please try again.'
       window.alert(message)
