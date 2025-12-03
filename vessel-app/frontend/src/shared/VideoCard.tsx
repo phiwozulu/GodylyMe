@@ -205,7 +205,18 @@ export default function VideoCard({
           loop
           muted={muted || !isActive}
           playsInline
-          onError={() => setVideoSrc("")}
+          crossOrigin="anonymous"
+          onError={(e) => {
+            const videoElement = e.target as HTMLVideoElement
+            console.error('[VideoCard] Video playback error:', {
+              videoId: video.id,
+              videoUrl: video.videoUrl,
+              src: videoSrc,
+              errorCode: videoElement?.error?.code,
+              errorMessage: videoElement?.error?.message,
+            })
+            setVideoSrc("")
+          }}
         />
       ) : (
         <div
