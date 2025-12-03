@@ -16,15 +16,45 @@ async function handler(req: VercelRequest, res: VercelResponse, payload: z.infer
   if (user.is_verified) {
     return res.status(400).json({ message: 'This account is already verified.' })
   }
+
+  // Check if a code was sent recently (within last 2 minutes)
+  if (user.verification_token_expires) {
+    const lastSentTime = new Date(user.verification_token_expires).getTime() - (1000 * 60 * 60 * 24) // expires is 24h from sent time
+    const now = Date.now()
+    const twoMinutesInMs = 2 * 60 * 1000
+    const timeSinceLastSend = now - lastSentTime
+
+    if (timeSinceLastSend < twoMinutesInMs) {
+      const secondsRemaining = Math.ceil((twoMinutesInMs - timeSinceLastSend) / 1000)
+      return res.status(429).json({
+        message: `Please wait ${secondsRemaining} seconds before requesting another code.`,
+        secondsRemaining,
+        canResendAt: new Date(lastSentTime + twoMinutesInMs).toISOString()
+      })
+    }
+  }
+
   const updated = await updateVerificationCode(user.id)
   if (!updated?.verification_token) {
     return res.status(500).json({ message: 'Unable to generate verification token. Try again later.' })
   }
   const emailPayload = buildVerificationEmail(updated.email, updated.verification_token)
-  sendEmail(emailPayload).catch((err) => {
-    console.error('Failed to send verification email', err)
-  })
-  res.json({ message: 'Verification code resent.' })
+
+  try {
+    await sendEmail(emailPayload)
+    console.log('[resend] Verification email sent successfully to:', updated.email)
+    res.json({
+      message: 'Verification code resent. Check your email.',
+      emailSent: true
+    })
+  } catch (err) {
+    console.error('[resend] Failed to send verification email:', err)
+    res.status(500).json({
+      message: 'Unable to send verification email. Please try again later or contact support.',
+      emailSent: false,
+      error: err instanceof Error ? err.message : 'Unknown error'
+    })
+  }
 }
 
 export default compose(cors, errorHandler, validateBody(resendSchema))(handler)

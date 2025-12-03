@@ -47,16 +47,30 @@ async function handler(req: VercelRequest, res: VercelResponse, payload: z.infer
     country: payload.country,
   })
 
+  let emailSent = false
+  let emailError = null
+
   if (user.verification_token) {
     const emailPayload = buildVerificationEmail(user.email, user.verification_token)
-    sendEmail(emailPayload).catch((err: unknown) => {
-      console.error('Failed to send verification email', err)
-    })
+    try {
+      await sendEmail(emailPayload)
+      emailSent = true
+      console.log('[signup] Verification email sent successfully to:', user.email)
+    } catch (err: unknown) {
+      emailSent = false
+      emailError = err instanceof Error ? err.message : 'Unknown error'
+      console.error('[signup] Failed to send verification email:', err)
+      console.error('[signup] Email error:', emailError)
+    }
   }
 
   res.status(201).json({
-    message: 'Account created. Enter the verification code we sent to your email.',
+    message: emailSent
+      ? 'Account created. Enter the verification code we sent to your email.'
+      : 'Account created, but we couldn\'t send the verification email. Please use the resend option or contact support.',
     user: presentUser(user),
+    emailSent,
+    emailError: emailSent ? undefined : emailError,
   })
 }
 

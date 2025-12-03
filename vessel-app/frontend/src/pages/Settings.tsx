@@ -541,6 +541,24 @@ function SigninForm({ onComplete, onSwitchMode, onClose }: SigninFormProps) {
   const [busy, setBusy] = useState(false)
   const [resendBusy, setResendBusy] = useState(false)
   const [needsVerification, setNeedsVerification] = useState(false)
+  const [resendCountdown, setResendCountdown] = useState<number>(0)
+
+  // Countdown timer effect
+  useEffect(() => {
+    if (resendCountdown <= 0) return
+
+    const timer = setInterval(() => {
+      setResendCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer)
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [resendCountdown])
 
   async function submit(event: FormEvent) {
     event.preventDefault()
@@ -598,11 +616,20 @@ function SigninForm({ onComplete, onSwitchMode, onClose }: SigninFormProps) {
     setResendBusy(true)
     try {
       await contentService.resendVerification(trimmedEmail)
-      setStatus(`We sent a new code to ${trimmedEmail}.`)
+      setStatus(`We sent a new code to ${trimmedEmail}. It should arrive within 2 minutes.`)
       setError(null)
+      setResendCountdown(120) // Start 2-minute countdown
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Unable to resend the code right now."
-      setError(message)
+      const payload = err instanceof Error ? (err as any).payload : null
+
+      // Handle rate limiting error
+      if (payload?.secondsRemaining) {
+        setResendCountdown(payload.secondsRemaining)
+        setError(`Please wait ${Math.floor(payload.secondsRemaining / 60)}:${String(payload.secondsRemaining % 60).padStart(2, '0')} before requesting another code.`)
+      } else {
+        const message = err instanceof Error ? err.message : "Unable to resend the code right now."
+        setError(message)
+      }
     } finally {
       setResendBusy(false)
     }
@@ -647,14 +674,24 @@ function SigninForm({ onComplete, onSwitchMode, onClose }: SigninFormProps) {
             pattern="[0-9]*"
             maxLength={6}
           />
-          <small className={styles.authHint}>Check your email for this code.</small>
+          <small className={styles.authHint}>
+            {resendCountdown > 0
+              ? `Your code should arrive in ${Math.floor(resendCountdown / 60)}:${String(resendCountdown % 60).padStart(2, '0')}`
+              : "Check your email for this code."
+            }
+          </small>
           <button
             type="button"
             className={styles.authLink}
             onClick={handleResendCode}
-            disabled={busy || resendBusy}
+            disabled={busy || resendBusy || resendCountdown > 0}
           >
-            {resendBusy ? "Sending code..." : "Resend verification code"}
+            {resendBusy
+              ? "Sending code..."
+              : resendCountdown > 0
+                ? `Wait ${Math.floor(resendCountdown / 60)}:${String(resendCountdown % 60).padStart(2, '0')} to resend`
+                : "Resend verification code"
+            }
           </button>
         </label>
       ) : null}

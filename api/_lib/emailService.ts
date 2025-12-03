@@ -24,9 +24,22 @@ function getTransporter(): nodemailer.Transporter | null {
   const pass = process.env.SMTP_PASS
 
   if (!host || !port || !user || !pass) {
+    console.error('[email] SMTP configuration incomplete:', {
+      host: host ? 'set' : 'missing',
+      port: port ? 'set' : 'missing',
+      user: user ? 'set' : 'missing',
+      pass: pass ? 'set' : 'missing',
+    })
     transporter = null
     return null
   }
+
+  console.log('[email] Creating SMTP transporter with:', {
+    host,
+    port,
+    user,
+    secure: port === 465,
+  })
 
   transporter = nodemailer.createTransport({
     host,
@@ -36,7 +49,13 @@ function getTransporter(): nodemailer.Transporter | null {
       user,
       pass,
     },
-  })
+    connectionTimeout: 15000, // 15 second timeout
+    greetingTimeout: 10000, // 10 second greeting timeout
+    socketTimeout: 15000, // 15 second socket timeout
+    pool: false, // Disable connection pooling for serverless
+    logger: true, // Enable logging
+    debug: true, // Enable debug output
+  } as any)
 
   return transporter
 }
@@ -46,18 +65,36 @@ export async function sendEmail(payload: EmailPayload): Promise<void> {
   const activeTransporter = getTransporter()
 
   if (!activeTransporter) {
-    console.warn('[email] SMTP settings missing. Email to %s was not sent. Subject: %s', payload.to, payload.subject)
+    const error = 'SMTP settings missing or incomplete. Cannot send email.'
+    console.error('[email] ' + error)
+    console.error('[email] Email details - To:', payload.to, 'Subject:', payload.subject)
     console.info('[email] Preview:\n%s', payload.html)
-    return
+    throw new Error(error)
   }
 
-  await activeTransporter.sendMail({
-    from,
-    to: payload.to,
-    subject: payload.subject,
-    html: payload.html,
-    text: payload.text,
-  })
+  console.log('[email] Attempting to send email to:', payload.to, 'Subject:', payload.subject)
+
+  try {
+    const info = await activeTransporter.sendMail({
+      from,
+      to: payload.to,
+      subject: payload.subject,
+      html: payload.html,
+      text: payload.text,
+    })
+
+    console.log('[email] ✅ Email sent successfully!')
+    console.log('[email] Message ID:', info.messageId)
+    console.log('[email] Response:', info.response)
+  } catch (error) {
+    console.error('[email] ❌ Failed to send email')
+    console.error('[email] Error:', error)
+    if (error instanceof Error) {
+      console.error('[email] Error message:', error.message)
+      console.error('[email] Error stack:', error.stack)
+    }
+    throw error
+  }
 }
 
 export function buildVerificationEmail(recipient: string, verificationCode: string) {
