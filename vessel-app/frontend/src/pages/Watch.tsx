@@ -219,12 +219,44 @@ export default function Watch() {
       }
     }
 
+    let touchStartY = 0
+    let touchStartTime = 0
+
+    const handleTouchStart = (event: TouchEvent) => {
+      if (queue.length <= 1) return
+      touchStartY = event.touches[0].clientY
+      touchStartTime = Date.now()
+    }
+
+    const handleTouchEnd = (event: TouchEvent) => {
+      if (queue.length <= 1) return
+      const touchEndY = event.changedTouches[0].clientY
+      const touchDuration = Date.now() - touchStartTime
+      const touchDistance = touchStartY - touchEndY
+
+      // Require minimum swipe distance (50px) and maximum duration (300ms) for quick swipes
+      if (Math.abs(touchDistance) > 50 && touchDuration < 300) {
+        event.preventDefault()
+        if (touchDistance > 0) {
+          // Swiped up - go to next video
+          goToIndex(currentIndex + 1)
+        } else {
+          // Swiped down - go to previous video
+          goToIndex(currentIndex - 1)
+        }
+      }
+    }
+
     const target = containerRef.current || window
     target.addEventListener('wheel', handleWheel, { passive: false })
+    target.addEventListener('touchstart', handleTouchStart, { passive: true })
+    target.addEventListener('touchend', handleTouchEnd, { passive: false })
     window.addEventListener('keydown', handleKeyDown)
 
     return () => {
       target.removeEventListener('wheel', handleWheel as EventListener)
+      target.removeEventListener('touchstart', handleTouchStart as EventListener)
+      target.removeEventListener('touchend', handleTouchEnd as EventListener)
       window.removeEventListener('keydown', handleKeyDown)
     }
   }, [queue.length, currentIndex, goToIndex])

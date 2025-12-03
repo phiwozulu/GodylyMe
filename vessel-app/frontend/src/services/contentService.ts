@@ -154,6 +154,72 @@ function isLikelyVideoAsset(url?: string | null): boolean {
   const ext = dotIndex >= 0 ? sanitized.slice(dotIndex).toLowerCase() : ''
   return VIDEO_FILE_EXTENSIONS.has(ext)
 }
+
+/**
+ * Generate a thumbnail from a video file by capturing a frame at 1 second
+ */
+async function generateVideoThumbnail(videoFile: File): Promise<Blob | null> {
+  return new Promise((resolve) => {
+    try {
+      const video = document.createElement('video')
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+
+      if (!ctx) {
+        resolve(null)
+        return
+      }
+
+      video.preload = 'metadata'
+      video.muted = true
+      video.playsInline = true
+
+      video.onloadedmetadata = () => {
+        // Set canvas dimensions to match video
+        canvas.width = video.videoWidth
+        canvas.height = video.videoHeight
+
+        // Seek to 1 second (or 10% of video duration, whichever is less)
+        const seekTime = Math.min(1, video.duration * 0.1)
+        video.currentTime = seekTime
+      }
+
+      video.onseeked = () => {
+        try {
+          // Draw video frame to canvas
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+
+          // Convert canvas to blob
+          canvas.toBlob(
+            (blob) => {
+              URL.revokeObjectURL(video.src)
+              resolve(blob)
+            },
+            'image/jpeg',
+            0.85 // Quality
+          )
+        } catch (err) {
+          console.error('Error capturing video frame:', err)
+          URL.revokeObjectURL(video.src)
+          resolve(null)
+        }
+      }
+
+      video.onerror = () => {
+        console.error('Error loading video for thumbnail generation')
+        URL.revokeObjectURL(video.src)
+        resolve(null)
+      }
+
+      // Create object URL and load video
+      video.src = URL.createObjectURL(videoFile)
+    } catch (err) {
+      console.error('Error in generateVideoThumbnail:', err)
+      resolve(null)
+    }
+  })
+}
+
 type ApiVideoComment = {
   id: string
   videoId: string
@@ -1798,6 +1864,16 @@ export const contentService = {
       if (input.category) formData.append('category', input.category)
       if (input.tags && input.tags.length > 0) formData.append('tags', JSON.stringify(input.tags))
       formData.append('video', input.file)
+
+      // Generate thumbnail from video
+      try {
+        const thumbnailBlob = await generateVideoThumbnail(input.file)
+        if (thumbnailBlob) {
+          formData.append('thumbnail', thumbnailBlob, 'thumbnail.jpg')
+        }
+      } catch (err) {
+        console.warn('Failed to generate thumbnail, continuing without it:', err)
+      }
 
       const payload = await requestJson<{ video: ApiFeedVideo }>(
         '/api/feed/videos',

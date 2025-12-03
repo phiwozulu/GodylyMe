@@ -557,4 +557,41 @@
   .bottomChrome {
     width: clamp(360px, 94vw, 420px);
   }
+
+  .prayerWrap {
+    padding: clamp(1rem, 3vw, 1.5rem) clamp(0.75rem, 3vw, 1rem);
+    padding-bottom: calc(var(--bottom-nav-height) + 1rem);
+  }
+
+  .prayerCards {
+    grid-template-columns: 1fr;
+    gap: clamp(1.25rem, 4vw, 1.75rem);
+    width: 100%;
+  }
+
+  .prayerCard {
+    padding: clamp(1.5rem, 4vw, 2rem);
+  }
+
+  .prayerTitle {
+    font-size: clamp(1.35rem, 5vw, 1.65rem);
+    line-height: 1.25;
+  }
+
+  .prayerText {
+    font-size: 0.95rem;
+    line-height: 1.65;
+  }
+
+  .prayerActions {
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+  }
+
+  .prayerButton {
+    width: 100%;
+    text-align: center;
+    padding: 0.85rem 1.2rem;
+  }
 }

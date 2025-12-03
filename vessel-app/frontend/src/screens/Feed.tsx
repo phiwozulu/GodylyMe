@@ -90,10 +90,8 @@ export default function Feed() {
   React.useEffect(() => {
     if (location.pathname === '/friends') {
       setTab('friends')
-    } else if (tab === 'friends') {
-      setTab('forYou')
     }
-  }, [location.pathname, tab])
+  }, [location.pathname])
 
   // debounce live search while user types
   React.useEffect(() => {
