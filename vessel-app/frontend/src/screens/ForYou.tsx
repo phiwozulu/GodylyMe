@@ -323,9 +323,17 @@ export default function ForYou({ filter, refreshKey }: Props) {
           onClose={async () => {
             setCommentClip(null)
             // Refetch feed to get updated counts
-            const data = await contentService.fetchForYouFeed()
-            setClips(data.length ? data : clips)
-            setUpdateTrigger(prev => prev + 1)
+            try {
+              const data = await contentService.fetchForYouFeed()
+              if (data.length) {
+                setClips(data)
+              }
+              setUpdateTrigger(prev => prev + 1)
+            } catch (err) {
+              // Ignore errors, keep existing data
+              console.error('Failed to refresh feed:', err)
+              setUpdateTrigger(prev => prev + 1)
+            }
           }}
         />
       ) : null}

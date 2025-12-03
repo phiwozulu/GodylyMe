@@ -243,15 +243,21 @@ export default function Following() {
           onClose={async () => {
             setCommentClip(null)
             // Refetch feed to get updated counts
-            const data = await contentService.fetchFollowingFeed()
-            const currentUser = contentService.getActiveProfile()
-            // Filter out user's own videos from Following feed
-            const filtered = data.filter((clip) => {
-              const userId = resolveUserId(clip)
-              return currentUser.id !== userId && currentUser.id !== clip.user.id
-            })
-            setClips(filtered)
-            setUpdateTrigger(prev => prev + 1)
+            try {
+              const data = await contentService.fetchFollowingFeed()
+              const currentUser = contentService.getActiveProfile()
+              // Filter out user's own videos from Following feed
+              const filtered = data.filter((clip) => {
+                const userId = resolveUserId(clip)
+                return currentUser.id !== userId && currentUser.id !== clip.user.id
+              })
+              setClips(filtered)
+              setUpdateTrigger(prev => prev + 1)
+            } catch (err) {
+              // Ignore errors, keep existing data
+              console.error('Failed to refresh feed:', err)
+              setUpdateTrigger(prev => prev + 1)
+            }
           }}
         />
       ) : null}
