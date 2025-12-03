@@ -1393,6 +1393,103 @@ async function startConversationWithHandles(handles: string[], message: string, 
   return mapApiThread(payload.thread)
 }
 
+type ApiMessageRequest = {
+  id: string
+  senderId: string
+  recipientId: string
+  content: string
+  status: 'pending' | 'accepted' | 'declined'
+  direction: 'inbound' | 'outbound'
+  sender: {
+    id: string
+    handle: string
+    name: string
+    photoUrl: string | null
+  }
+  recipient: {
+    id: string
+    handle: string
+    name: string
+    photoUrl: string | null
+  }
+  createdAt: string
+  updatedAt: string
+}
+
+export type MessageRequest = {
+  id: string
+  senderId: string
+  recipientId: string
+  content: string
+  status: 'pending' | 'accepted' | 'declined'
+  direction: 'inbound' | 'outbound'
+  senderHandle: string
+  senderName: string
+  senderPhotoUrl: string | null
+  recipientHandle: string
+  recipientName: string
+  recipientPhotoUrl: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+async function fetchMessageRequests(): Promise<MessageRequest[]> {
+  const payload = await getJson<{ requests: ApiMessageRequest[] }>('/api/messages/requests', true)
+  return payload.requests.map(req => ({
+    id: req.id,
+    senderId: req.senderId,
+    recipientId: req.recipientId,
+    content: req.content,
+    status: req.status,
+    direction: req.direction,
+    senderHandle: req.sender.handle,
+    senderName: req.sender.name,
+    senderPhotoUrl: req.sender.photoUrl,
+    recipientHandle: req.recipient.handle,
+    recipientName: req.recipient.name,
+    recipientPhotoUrl: req.recipient.photoUrl,
+    createdAt: req.createdAt,
+    updatedAt: req.updatedAt,
+  }))
+}
+
+async function sendMessageRequest(recipientHandle: string, content: string): Promise<MessageRequest> {
+  const payload = await postJson<{ request: ApiMessageRequest }>(
+    '/api/messages/requests',
+    { recipientHandle: normalizeHandleForApi(recipientHandle), content },
+    true
+  )
+  const req = payload.request
+  return {
+    id: req.id,
+    senderId: req.senderId,
+    recipientId: req.recipientId,
+    content: req.content,
+    status: req.status,
+    direction: req.direction,
+    senderHandle: req.sender.handle,
+    senderName: req.sender.name,
+    senderPhotoUrl: req.sender.photoUrl,
+    recipientHandle: req.recipient.handle,
+    recipientName: req.recipient.name,
+    recipientPhotoUrl: req.recipient.photoUrl,
+    createdAt: req.createdAt,
+    updatedAt: req.updatedAt,
+  }
+}
+
+async function respondToMessageRequest(requestId: string, action: 'accept' | 'decline'): Promise<{ status: string, thread?: MessageThread }> {
+  const payload = await postJson<{ status: string, thread?: ApiThreadSummary }>(
+    `/api/messages/requests/${encodeURIComponent(requestId)}`,
+    { action },
+    true
+  )
+  return {
+    status: payload.status,
+    thread: payload.thread ? mapApiThread(payload.thread) : undefined,
+  }
+}
+
 function normalizeHandleForApi(value: string): string {
   return value.trim().replace(/^@/, '').toLowerCase()
 }
@@ -1600,6 +1697,9 @@ export const contentService = {
   fetchMessageThreads,
   fetchThreadMessages,
   sendThreadMessage,
+  fetchMessageRequests,
+  sendMessageRequest,
+  respondToMessageRequest,
   startConversation(handles: string | string[], message: string, subject?: string) {
     const list = Array.isArray(handles) ? handles : [handles]
     return startConversationWithHandles(list, message, subject)

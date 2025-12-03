@@ -119,6 +119,22 @@ export async function initDatabase(): Promise<void> {
     `)
     await pool.query('CREATE INDEX IF NOT EXISTS idx_messages_thread ON messages(thread_id);')
 
+    // 5b. Message requests table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS message_requests (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        sender_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        recipient_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        content TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'declined')),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE(sender_id, recipient_id)
+      );
+    `)
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_message_requests_recipient ON message_requests(recipient_id);')
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_message_requests_sender ON message_requests(sender_id);')
+
     // 6. Notifications table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS notifications (

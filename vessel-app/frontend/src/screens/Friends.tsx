@@ -51,6 +51,7 @@ export default function Friends() {
 
   React.useEffect(() => {
     let mounted = true
+    let pollInterval: NodeJS.Timeout | null = null
 
     async function load() {
       try {
@@ -84,15 +85,47 @@ export default function Friends() {
       }
     }
 
+    async function pollForNewContent() {
+      if (!mounted) return
+      try {
+        if (!contentService.isAuthenticated()) return
+        const followingFeed = await contentService.fetchFollowingFeed()
+        if (mounted && followingFeed.length) {
+          setClips((current) => {
+            // Only add new videos that aren't already in the feed
+            const existingIds = new Set(current.map(v => v.id))
+            const newVideos = followingFeed.filter(v => !existingIds.has(v.id))
+            if (newVideos.length > 0) {
+              // Add new videos to the end of the feed
+              return [...current, ...newVideos]
+            }
+            return current
+          })
+        }
+      } catch (err) {
+        // Silently fail on polling errors
+        console.debug('Poll failed:', err)
+      }
+    }
+
     load()
+<<<<<<< Updated upstream
     const unsubscribe = contentService.subscribe(() => {
       // Trigger immediate re-render for bookmark/like changes
       setUpdateTrigger(prev => prev + 1)
       // Also reload feed data
       load()
     })
+=======
+    const unsubscribe = contentService.subscribe(load)
+
+    // Poll for new content every 30 seconds
+    pollInterval = setInterval(pollForNewContent, 30000)
+
+>>>>>>> Stashed changes
     return () => {
       mounted = false
+      if (pollInterval) clearInterval(pollInterval)
       unsubscribe()
       if (rafRef.current !== null) {
         cancelAnimationFrame(rafRef.current)
