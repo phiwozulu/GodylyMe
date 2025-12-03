@@ -1901,7 +1901,7 @@ export const contentService = {
     }
     const payload = await postJson<{ comment: ApiVideoComment }>(
       `/api/videos/${encodeURIComponent(clipId)}/comments`,
-      { body: trimmed },
+      { content: trimmed },
       true
     )
     clip.comments = (clip.comments ?? 0) + 1
