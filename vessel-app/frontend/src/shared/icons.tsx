@@ -169,6 +169,7 @@ export const SvgInbox = (props: ImgIconProps) => <ImgIcon src="/media/icons/icon
 export const SvgDiscover = (props: ImgIconProps) => <ImgIcon src="/media/icons/icons8-discover.svg" alt="Discover" {...props} />
 export const SvgBack = (props: ImgIconProps) => <ImgIcon src="/media/icons/icons8-back-arrow.svg" alt="Back" {...props} />
 export const SvgShare = (props: ImgIconProps) => <ImgIcon src="/media/icons/icons8-share.svg" alt="Share" {...props} />
+export const SvgVerified = (props: ImgIconProps) => <ImgIcon src="/media/icons/icons8-verified.svg" alt="Verified" {...props} />
 
 export const MessageSendIcon = (props: BaseIconProps) => (
   <svg width={props.width || 35} height={props.height || 35} viewBox="0 0 35 35" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>

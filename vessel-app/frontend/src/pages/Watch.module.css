@@ -61,10 +61,11 @@
 }
 
 .backButton {
-  position: absolute;
-  top: clamp(0.75rem, 3vw, 1.25rem);
-  left: clamp(0.75rem, 3vw, 1.25rem);
-  z-index: 10;
+  position: fixed;
+  top: calc(1rem + env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(calc(-50% - min(260px, 46vw) + clamp(0.75rem, 3vw, 1.25rem)));
+  z-index: 20;
   border: none;
   width: 44px;
   height: 44px;
@@ -80,12 +81,12 @@
 }
 
 .backButton:hover {
-  transform: scale(1.05);
+  transform: translateX(calc(-50% - min(260px, 46vw) + clamp(0.75rem, 3vw, 1.25rem))) scale(1.05);
   box-shadow: 0 20px 42px rgba(92, 82, 56, 0.3);
 }
 
 .backButton:active {
-  transform: scale(0.97);
+  transform: translateX(calc(-50% - min(260px, 46vw) + clamp(0.75rem, 3vw, 1.25rem))) scale(0.97);
 }
 
 .actionsRail {

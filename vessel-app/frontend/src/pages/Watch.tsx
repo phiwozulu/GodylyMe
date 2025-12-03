@@ -380,6 +380,14 @@ export default function Watch() {
 
   return (
     <div className={styles.watch} ref={containerRef}>
+      <button
+        type="button"
+        className={styles.backButton}
+        onClick={() => navigate(-1)}
+        aria-label="Go back"
+      >
+        <SvgBack width={22} height={22} />
+      </button>
       <div
         key={`${clip.id}-${animationKey}`}
         className={`${styles.viewer} ${
@@ -397,14 +405,6 @@ export default function Watch() {
           loop
           controls={false}
         />
-        <button
-          type="button"
-          className={styles.backButton}
-          onClick={() => navigate(-1)}
-          aria-label="Go back"
-        >
-          <SvgBack width={22} height={22} />
-        </button>
         <div className={styles.actionsRail}>
           {actions.map((action) => (
             <button

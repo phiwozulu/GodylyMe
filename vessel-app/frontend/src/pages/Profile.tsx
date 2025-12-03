@@ -9,7 +9,7 @@ import {
   THUMBNAIL_PLACEHOLDER,
 } from "../services/contentService"
 import { formatLikes } from "../services/mockData"
-import { SvgBack, SvgShare } from "../shared/icons"
+import { SvgBack, SvgShare, SvgVerified } from "../shared/icons"
 import styles from "./Profile.module.css"
 
 type TabKey = "videos" | "liked" | "saved"
@@ -419,7 +419,12 @@ export default function Profile() {
           </div>
           <div className={styles.bio}>
             <span className={styles.handle}>{profileHandle}</span>
-            <h1 className={styles.displayName}>{displayName}</h1>
+            <div className={styles.displayNameRow}>
+              <h1 className={styles.displayName}>{displayName}</h1>
+              {isSelf && activeProfile.isVerified ? (
+                <SvgVerified width={20} height={20} className={styles.verifiedBadge} />
+              ) : null}
+            </div>
             {church ? <p className={styles.church}>{church}</p> : null}
           </div>
           <div className={styles.statsRow}>
