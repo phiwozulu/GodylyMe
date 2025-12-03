@@ -200,7 +200,62 @@ export async function initDatabase(): Promise<void> {
     }
 
     await pool.query('CREATE INDEX IF NOT EXISTS idx_video_shares_video ON video_shares(video_id);')
+
+    // Video comments table
+    try {
+      const commentsTableExists = await pool.query(`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables
+          WHERE table_name = 'video_comments'
+        );
+      `)
+
+      if (commentsTableExists.rows[0].exists) {
+        const columnType = await pool.query(`
+          SELECT data_type FROM information_schema.columns
+          WHERE table_name = 'video_comments' AND column_name = 'video_id';
+        `)
+
+        if (columnType.rows[0]?.data_type === 'uuid') {
+          console.log('Migrating video_comments to TEXT video_id...')
+          await pool.query('DROP TABLE IF EXISTS video_comments CASCADE;')
+          await pool.query(`
+            CREATE TABLE video_comments (
+              id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+              video_id TEXT NOT NULL,
+              user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+              body TEXT NOT NULL,
+              created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+          `)
+        }
+      } else {
+        await pool.query(`
+          CREATE TABLE video_comments (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            video_id TEXT NOT NULL,
+            user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            body TEXT NOT NULL,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+          );
+        `)
+      }
+    } catch (err) {
+      console.error('Error migrating video_comments:', err)
+      await pool.query('DROP TABLE IF EXISTS video_comments CASCADE;')
+      await pool.query(`
+        CREATE TABLE video_comments (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          video_id TEXT NOT NULL,
+          user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          body TEXT NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+      `)
+    }
+
     await pool.query('CREATE INDEX IF NOT EXISTS idx_video_comments_video ON video_comments(video_id);')
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_video_comments_user ON video_comments(user_id);')
 
     // 5. Messaging tables
     await pool.query(`

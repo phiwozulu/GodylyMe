@@ -100,6 +100,7 @@ async function handlePostComment(
     res.json({
       comment: {
         id: commentId,
+        videoId: videoId,
         body: content.trim(),
         user: {
           id: user.id,
