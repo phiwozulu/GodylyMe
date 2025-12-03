@@ -352,6 +352,18 @@ function safeVideoSrc(candidate?: string) {
 function isVideoAsset(url: string) {
   try {
     const parsed = new URL(url, "https://placeholder.vessel")
+
+    // Check if it's a Vercel Blob storage URL
+    if (parsed.hostname.includes('blob.vercel-storage.com')) {
+      return true
+    }
+
+    // Check if path contains /videos/ (common video storage path)
+    if (parsed.pathname.includes('/videos/')) {
+      return true
+    }
+
+    // Check for video file extension
     const sanitized = parsed.pathname.split("?")[0] || ""
     return /\.(mp4|mov|webm|m4v|avi|mkv)$/i.test(sanitized)
   } catch {
