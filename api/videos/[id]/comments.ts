@@ -74,10 +74,10 @@ async function handlePostComment(
 
     const videoOwnerId = videoResult.rows[0].user_id
 
-    // Insert comment
+    // Insert comment (using 'body' column for backward compatibility)
     const commentId = randomUUID()
     await pool.query(`
-      INSERT INTO video_comments (id, video_id, user_id, content, created_at)
+      INSERT INTO video_comments (id, video_id, user_id, body, created_at)
       VALUES ($1, $2, $3, $4, NOW())
     `, [commentId, videoId, userId, content.trim()])
 
@@ -129,7 +129,7 @@ async function handleGetComments(
     const result = await pool.query(`
       SELECT
         vc.id,
-        vc.content,
+        COALESCE(vc.body, vc.content) as content,
         vc.created_at,
         u.id as user_id,
         u.handle,
