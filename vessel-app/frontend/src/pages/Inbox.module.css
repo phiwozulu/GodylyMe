@@ -1040,25 +1040,4 @@
   .composer button {
     width: 100%;
   }
-
-  .suggestionCard {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .suggestionTopRow {
-    width: 100%;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.4rem;
-  }
-
-  .suggestionActionsCompact {
-    width: 100%;
-    justify-content: flex-start;
-  }
-
-  .suggestionActionsCompact button:last-child {
-    margin-left: auto;
-  }
 }

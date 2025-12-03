@@ -237,7 +237,7 @@ export default function Upload() {
         </label>
         <label className={styles.fileInput}>
           <span>Upload video</span>
-          <input type="file" accept="video/*" capture="environment" onChange={handleFileChange} />
+          <input type="file" accept="video/*" onChange={handleFileChange} />
         </label>
         {file ? <p className={styles.fileMeta}>Ready to upload: {file.name}</p> : null}
 

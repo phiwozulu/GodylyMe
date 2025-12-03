@@ -150,7 +150,15 @@ export default function Inbox() {
       .fetchNotifications()
       .then((items) => {
         if (!cancelled) {
-          setNotifications(items)
+          // Filter out previously dismissed notifications
+          try {
+            const dismissed = JSON.parse(localStorage.getItem('dismissedNotifications') || '[]') as string[]
+            const filtered = items.filter((item) => !dismissed.includes(item.id))
+            setNotifications(filtered)
+          } catch (err) {
+            console.error('Failed to filter dismissed notifications', err)
+            setNotifications(items)
+          }
         }
       })
       .catch((error) => {
@@ -208,12 +216,25 @@ export default function Inbox() {
       try {
         const data = await contentService.fetchConnectionSuggestions(4)
         if (!cancelled) {
-          setSuggestions(
-            data.map((item) => ({
-              ...item,
-              isFollowing: contentService.isFollowing(item.handle),
-            }))
-          )
+          // Filter out previously dismissed suggestions
+          try {
+            const dismissed = JSON.parse(localStorage.getItem('dismissedSuggestions') || '[]') as string[]
+            const filtered = data.filter((item) => !dismissed.includes(item.id))
+            setSuggestions(
+              filtered.map((item) => ({
+                ...item,
+                isFollowing: contentService.isFollowing(item.handle),
+              }))
+            )
+          } catch (err) {
+            console.error('Failed to filter dismissed suggestions', err)
+            setSuggestions(
+              data.map((item) => ({
+                ...item,
+                isFollowing: contentService.isFollowing(item.handle),
+              }))
+            )
+          }
         }
       } catch (error) {
         if (!cancelled) {
@@ -320,6 +341,16 @@ export default function Inbox() {
 
   const dismissNotification = React.useCallback((id: string) => {
     setNotifications((current) => current.filter((item) => item.id !== id))
+    // Persist dismissed notification
+    try {
+      const dismissed = JSON.parse(localStorage.getItem('dismissedNotifications') || '[]') as string[]
+      if (!dismissed.includes(id)) {
+        dismissed.push(id)
+        localStorage.setItem('dismissedNotifications', JSON.stringify(dismissed))
+      }
+    } catch (err) {
+      console.error('Failed to persist dismissed notification', err)
+    }
   }, [])
 
   function updateDraft(threadId: string, value: string) {
@@ -388,6 +419,16 @@ export default function Inbox() {
 
   function dismissSuggestion(id: string) {
     setSuggestions((current) => current.filter((item) => item.id !== id))
+    // Persist dismissed suggestion
+    try {
+      const dismissed = JSON.parse(localStorage.getItem('dismissedSuggestions') || '[]') as string[]
+      if (!dismissed.includes(id)) {
+        dismissed.push(id)
+        localStorage.setItem('dismissedSuggestions', JSON.stringify(dismissed))
+      }
+    } catch (err) {
+      console.error('Failed to persist dismissed suggestion', err)
+    }
   }
 
   async function startNewConversation(event: React.FormEvent) {
