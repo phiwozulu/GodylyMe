@@ -111,6 +111,9 @@ export default function ForYou({ filter, refreshKey }: Props) {
     // Poll for new content every 30 seconds
     pollInterval = setInterval(pollForNewContent, 30000)
 
+    // Poll for new content every 30 seconds
+    pollInterval = setInterval(pollForNewContent, 30000)
+
     return () => {
       mounted = false
       if (pollInterval) clearInterval(pollInterval)
