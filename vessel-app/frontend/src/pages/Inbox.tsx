@@ -9,7 +9,6 @@ import {
   type SuggestedConnection,
   type NotificationSummary,
   type ContactMatch,
-  type MessageRequest,
 } from '../services/contentService'
 import { formatRelativeTime, formatDateTime } from '../utils/time'
 
@@ -30,7 +29,6 @@ export default function Inbox() {
   const [threadsError, setThreadsError] = React.useState<string | null>(null)
   const [activeConversationId, setActiveConversationId] = React.useState<string | null>(null)
   const [expandedThreadId, setExpandedThreadId] = React.useState<string | null>(null)
-  const [expandedRequestId, setExpandedRequestId] = React.useState<string | null>(null)
   const [messages, setMessages] = React.useState<ThreadMessage[]>([])
   const [messagesBusy, setMessagesBusy] = React.useState(false)
   const [messageError, setMessageError] = React.useState<string | null>(null)
@@ -55,10 +53,6 @@ export default function Inbox() {
   const [mutualLoading, setMutualLoading] = React.useState(false)
   const [mutualError, setMutualError] = React.useState<string | null>(null)
   const [handleSuggestions, setHandleSuggestions] = React.useState<ContactMatch[]>([])
-  const [requests, setRequests] = React.useState<MessageRequest[]>([])
-  const [requestsLoading, setRequestsLoading] = React.useState(false)
-  const [requestActionBusy, setRequestActionBusy] = React.useState<string | null>(null)
-  const [blockedHandles, setBlockedHandles] = React.useState<Set<string>>(new Set())
   const [mutualConnectionsPopup, setMutualConnectionsPopup] = React.useState<{
     suggestionId: string
     suggestionHandle: string
@@ -132,66 +126,6 @@ export default function Inbox() {
     }
   }, [])
 
-  // Load message requests
-  React.useEffect(() => {
-    let cancelled = false
-    let pollInterval: NodeJS.Timeout | null = null
-
-    async function loadRequests() {
-      if (!isAuthenticated) {
-        setRequests([])
-        setRequestsLoading(false)
-        return
-      }
-      setRequestsLoading(true)
-      try {
-        const data = await contentService.fetchMessageRequests()
-        if (!cancelled) {
-          // Only show pending requests
-          setRequests(data.filter(req => req.status === 'pending'))
-          // Track declined handles
-          const declined = data.filter(req => req.status === 'declined' && req.direction === 'outbound')
-          setBlockedHandles(new Set(declined.map(req => req.recipientHandle)))
-        }
-      } catch (error) {
-        // Silently fail, requests are not critical
-        if (!cancelled) {
-          setRequests([])
-        }
-      } finally {
-        if (!cancelled) {
-          setRequestsLoading(false)
-        }
-      }
-    }
-
-    async function pollForNewRequests() {
-      if (cancelled || !isAuthenticated) return
-      try {
-        const data = await contentService.fetchMessageRequests()
-        if (!cancelled) {
-          setRequests(data.filter(req => req.status === 'pending'))
-          const declined = data.filter(req => req.status === 'declined' && req.direction === 'outbound')
-          setBlockedHandles(new Set(declined.map(req => req.recipientHandle)))
-        }
-      } catch (error) {
-        // Silently fail on polling errors
-        console.debug('Request poll failed:', error)
-      }
-    }
-
-    void loadRequests()
-
-    // Poll for new requests every 30 seconds
-    if (isAuthenticated) {
-      pollInterval = setInterval(pollForNewRequests, 30000)
-    }
-
-    return () => {
-      cancelled = true
-      if (pollInterval) clearInterval(pollInterval)
-    }
-  }, [isAuthenticated])
 
   const openComposer = React.useCallback(
     (handle?: string) => {
@@ -624,20 +558,6 @@ export default function Inbox() {
       return
     }
     setComposeError(null)
-    if (blockedHandles.has(target)) {
-      setComposeError('This user has declined your requests.')
-      return
-    }
-    const pendingRequest = requests.find(
-      (request) => {
-        const reqHandle = request.direction === 'outbound' ? request.recipientHandle : request.senderHandle
-        return normalizeHandle(reqHandle) === target && request.status === 'pending'
-      }
-    )
-    if (pendingRequest) {
-      setComposeNotice('You already have a pending request with this user.')
-      return
-    }
 
     const existingThread = threads.find((thread) => {
       const participant = resolveThreadTargetHandle(thread, selfHandle)
@@ -655,25 +575,6 @@ export default function Inbox() {
       return
     }
 
-    const isMutual = mutualContacts.some((contact) => normalizeHandle(contact.handle || contact.id) === target)
-    if (!isMutual) {
-      setComposeBusy(true)
-      try {
-        const request = await contentService.sendMessageRequest(target, body)
-        setRequests((current) => [request, ...current])
-        setComposeNotice('Sent as a message request. Messaging will open once accepted.')
-        setComposeDraft('')
-        setComposeHandle('')
-        setHandleSuggestions([])
-      } catch (error) {
-        const message =
-          error instanceof Error ? error.message : 'Unable to send message request. Please try again.'
-        setComposeError(message)
-      } finally {
-        setComposeBusy(false)
-      }
-      return
-    }
     setComposeBusy(true)
     setComposeError(null)
     try {
@@ -712,58 +613,6 @@ export default function Inbox() {
     setThreadsRefreshKey((value) => value + 1)
   }, [])
 
-  async function acceptRequest(id: string) {
-    const request = requests.find((item) => item.id === id)
-    if (!request) return
-    setRequestActionBusy(id)
-    try {
-      const result = await contentService.respondToMessageRequest(id, 'accept')
-      // Remove request from list
-      setRequests((current) => current.filter((item) => item.id !== id))
-      // Add the new thread to threads list
-      if (result.thread) {
-        setThreads((current) => {
-          const filtered = current.filter((item) => item.id !== result.thread!.id)
-          return [result.thread!, ...filtered].sort(
-            (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-          )
-        })
-        // Expand the new thread
-        setExpandedThreadId(result.thread.id)
-        setExpandedRequestId(null)
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unable to accept request. Please try again.'
-      window.alert(message)
-    } finally {
-      setRequestActionBusy(null)
-    }
-  }
-
-  async function declineRequest(id: string) {
-    const request = requests.find((item) => item.id === id)
-    if (!request) return
-    setRequestActionBusy(id)
-    try {
-      await contentService.respondToMessageRequest(id, 'decline')
-      // Remove request from list
-      setRequests((current) => current.filter((item) => item.id !== id))
-      // Add to blocked handles if it was an inbound request
-      if (request.direction === 'inbound') {
-        setBlockedHandles((current) => {
-          const next = new Set(current)
-          next.add(normalizeHandle(request.senderHandle))
-          return next
-        })
-      }
-      setExpandedRequestId(null)
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unable to decline request. Please try again.'
-      window.alert(message)
-    } finally {
-      setRequestActionBusy(null)
-    }
-  }
 
   let tabContent: React.ReactNode
 
@@ -947,79 +796,11 @@ export default function Inbox() {
       </div>
     )
 
-    const requestsSection =
-      isAuthenticated && requests.length ? (
-        <div className={styles.requestsPanel}>
-          <div className={styles.requestRowHeader}>
-            <span>Message requests</span>
-            {mutualLoading ? <small>Syncing mutuals...</small> : null}
-            {mutualError ? <small className={styles.composeError}>{mutualError}</small> : null}
-          </div>
-          {requests.map((request) => {
-            const displayHandle = request.direction === 'outbound' ? request.recipientHandle : request.senderHandle
-            const normalizedHandle = formatHandle(displayHandle)
-            const isExpanded = expandedRequestId === request.id
-            const isBusy = requestActionBusy === request.id
-            return (
-              <div key={request.id} className={`${styles.requestRow} ${isExpanded ? styles.requestRowExpanded : ''}`}>
-                <button
-                  type="button"
-                  className={styles.requestSummary}
-                  onClick={() => setExpandedRequestId(isExpanded ? null : request.id)}
-                  disabled={isBusy}
-                >
-                  <div className={styles.requestBody}>
-                    <span className={styles.requestSender}>{normalizedHandle}</span>
-                    {!isExpanded && <span className={styles.requestText}>{request.content}</span>}
-                    <span className={styles.requestMeta}>
-                      {request.direction === 'outbound' ? 'You sent a request' : 'Sent you a request'} •{' '}
-                      {formatRelativeTime(request.createdAt)}
-                    </span>
-                  </div>
-                </button>
-                {isExpanded && (
-                  <div className={styles.requestDetails}>
-                    <div className={styles.requestMessageBox}>
-                      <span className={styles.requestLabel}>Message:</span>
-                      <p className={styles.requestText}>{request.content}</p>
-                    </div>
-                    {request.direction === 'inbound' ? (
-                      <div className={styles.requestActions}>
-                        <button
-                          className={styles.requestAccept}
-                          type="button"
-                          onClick={() => acceptRequest(request.id)}
-                          disabled={isBusy}
-                        >
-                          {isBusy ? 'Accepting...' : 'Accept'}
-                        </button>
-                        <button
-                          className={styles.requestDecline}
-                          type="button"
-                          onClick={() => declineRequest(request.id)}
-                          disabled={isBusy}
-                        >
-                          {isBusy ? 'Declining...' : 'Decline'}
-                        </button>
-                      </div>
-                    ) : (
-                      <div className={styles.requestStatus}>
-                        <small>{request.status === 'pending' ? 'Waiting for response...' : request.status}</small>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      ) : null
 
     if (threadsLoading) {
       tabContent = (
         <>
           {composeSection}
-          {requestsSection}
           <div className={styles.status}>Loading conversations...</div>
         </>
       )
@@ -1039,7 +820,6 @@ export default function Inbox() {
       tabContent = (
         <>
           {composeSection}
-          {requestsSection}
           <div className={styles.status}>
             No messages yet. Visit Suggested to follow people you know and start the first conversation.
           </div>
@@ -1049,7 +829,6 @@ export default function Inbox() {
       tabContent = (
         <>
           {composeSection}
-          {requestsSection}
           {threads.map((thread) => {
             const isActive = thread.id === activeConversationId
             const draftValue = drafts[thread.id] ?? ''
