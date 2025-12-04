@@ -200,8 +200,9 @@
 .inlineResults {
   margin-top: 20px; /* move results closer to the search field (~20px) */
   max-width: 360px;
-  max-height: 60vh; /* Limit height to 60% of viewport */
+  max-height: calc(100vh - 280px); /* Account for search bar and bottom nav */
   overflow-y: auto; /* Enable vertical scrolling */
+  overflow-x: hidden;
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.35);
   background: rgba(0, 0, 0, 0.6);
@@ -211,6 +212,10 @@
   gap: 0.8rem;
   /* Smooth scrolling */
   scroll-behavior: smooth;
+  /* Enable momentum scrolling on iOS */
+  -webkit-overflow-scrolling: touch;
+  /* Prevent content from going under the container */
+  overscroll-behavior: contain;
   /* Custom scrollbar styling */
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
