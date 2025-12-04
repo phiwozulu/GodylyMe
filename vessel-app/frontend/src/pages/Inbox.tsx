@@ -59,6 +59,11 @@ export default function Inbox() {
   const [requestsLoading, setRequestsLoading] = React.useState(false)
   const [requestActionBusy, setRequestActionBusy] = React.useState<string | null>(null)
   const [blockedHandles, setBlockedHandles] = React.useState<Set<string>>(new Set())
+  const [mutualConnectionsPopup, setMutualConnectionsPopup] = React.useState<{
+    suggestionId: string
+    suggestionHandle: string
+    mutualHandles: string[]
+  } | null>(null)
   const isAuthenticated = contentService.isAuthenticated()
   const threadRefs = React.useRef<Record<string, HTMLDivElement | null>>({})
 
@@ -555,6 +560,43 @@ export default function Inbox() {
       }
     } catch (err) {
       console.error('Failed to persist dismissed suggestion', err)
+    }
+  }
+
+  async function showMutualConnections(suggestionId: string, suggestionHandle: string) {
+    try {
+      // Fetch following and followers to compute mutual connections
+      const [followingProfiles, followerProfiles] = await Promise.all([
+        contentService.fetchFollowingProfiles(),
+        contentService.fetchFollowerProfiles(),
+      ])
+
+      // Build set of people who follow the current user
+      const currentUserFollowerHandles = new Set(
+        followerProfiles.map(profile => normalizeHandle(profile.handle || profile.id))
+      )
+
+      // Find people the current user follows who also follow them back
+      const mutualHandles = followingProfiles
+        .filter(profile => {
+          const handle = normalizeHandle(profile.handle || profile.id)
+          return handle && currentUserFollowerHandles.has(handle)
+        })
+        .map(profile => profile.handle || profile.id)
+
+      setMutualConnectionsPopup({
+        suggestionId,
+        suggestionHandle,
+        mutualHandles: mutualHandles.slice(0, 10), // Show up to 10 mutual connections
+      })
+    } catch (error) {
+      console.error('Failed to fetch mutual connections:', error)
+      // Show popup with empty list on error
+      setMutualConnectionsPopup({
+        suggestionId,
+        suggestionHandle,
+        mutualHandles: [],
+      })
     }
   }
 
@@ -1153,7 +1195,13 @@ export default function Inbox() {
                     </div>
                   </div>
                   {suggestion.summary ? <small className={styles.suggestionSummary}>{suggestion.summary}</small> : null}
-                  <span className={styles.suggestionMeta}>{mutualText}</span>
+                  <button
+                    type="button"
+                    className={styles.suggestionMeta}
+                    onClick={() => showMutualConnections(suggestion.id, suggestion.handle)}
+                  >
+                    {mutualText}
+                  </button>
                 </div>
               </article>
             )
@@ -1165,6 +1213,46 @@ export default function Inbox() {
 
   return (
     <div className={styles.inbox}>
+      {mutualConnectionsPopup ? (
+        <div className={styles.overlay} onClick={() => setMutualConnectionsPopup(null)}>
+          <div className={styles.mutualPopup} onClick={(e) => e.stopPropagation()}>
+            <header className={styles.mutualPopupHeader}>
+              <h3>
+                {mutualConnectionsPopup.mutualHandles.length}{' '}
+                {mutualConnectionsPopup.mutualHandles.length === 1 ? 'mutual connection' : 'mutual connections'}
+              </h3>
+              <button
+                type="button"
+                className={styles.mutualPopupClose}
+                onClick={() => setMutualConnectionsPopup(null)}
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </header>
+            <div className={styles.mutualPopupList}>
+              {mutualConnectionsPopup.mutualHandles.length === 0 ? (
+                <p className={styles.mutualPopupEmpty}>No mutual connections found</p>
+              ) : (
+                mutualConnectionsPopup.mutualHandles.map((handle) => (
+                  <button
+                    key={handle}
+                    type="button"
+                    className={styles.mutualPopupItem}
+                    onClick={() => {
+                      setMutualConnectionsPopup(null)
+                      navigate(`/profile/${handle}`)
+                    }}
+                  >
+                    <div className={styles.mutualPopupAvatar}>{formatHandle(handle).slice(1, 2).toUpperCase()}</div>
+                    <span className={styles.mutualPopupHandle}>{formatHandle(handle)}</span>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
       <div className={styles.inboxCard}>
         <header className={styles.hero}>
           <h1>Inbox</h1>
