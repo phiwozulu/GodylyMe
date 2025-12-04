@@ -1347,19 +1347,37 @@ async function hashEmailForMatch(value: string): Promise<string> {
 }
 
 async function fetchMessageThreads(): Promise<MessageThread[]> {
-  const payload = await getJson<{ threads: ApiThreadSummary[] }>('/api/messages/threads', true)
-  return payload.threads.map(mapApiThread)
+  try {
+    const payload = await getJson<{ threads: ApiThreadSummary[] }>('/api/messages/threads', true)
+    if (!payload || !payload.threads || !Array.isArray(payload.threads)) {
+      console.error('Invalid threads payload:', payload)
+      return []
+    }
+    return payload.threads.map(mapApiThread)
+  } catch (error) {
+    console.error('Failed to fetch message threads:', error)
+    return []
+  }
 }
 
 async function fetchThreadMessages(threadId: string): Promise<ThreadMessage[]> {
   if (!threadId) {
     return []
   }
-  const payload = await getJson<{ messages: ApiThreadMessage[] }>(
-    `/api/messages/threads/${encodeURIComponent(threadId)}/messages`,
-    true
-  )
-  return payload.messages.map(mapApiThreadMessage)
+  try {
+    const payload = await getJson<{ messages: ApiThreadMessage[] }>(
+      `/api/messages/threads/${encodeURIComponent(threadId)}/messages`,
+      true
+    )
+    if (!payload || !payload.messages || !Array.isArray(payload.messages)) {
+      console.error('Invalid messages payload:', payload)
+      return []
+    }
+    return payload.messages.map(mapApiThreadMessage)
+  } catch (error) {
+    console.error('Failed to fetch thread messages:', error)
+    return []
+  }
 }
 
 async function sendThreadMessage(threadId: string, body: string): Promise<ThreadMessage> {
@@ -1434,23 +1452,32 @@ export type MessageRequest = {
 }
 
 async function fetchMessageRequests(): Promise<MessageRequest[]> {
-  const payload = await getJson<{ requests: ApiMessageRequest[] }>('/api/messages/requests', true)
-  return payload.requests.map(req => ({
-    id: req.id,
-    senderId: req.senderId,
-    recipientId: req.recipientId,
-    content: req.content,
-    status: req.status,
-    direction: req.direction,
-    senderHandle: req.sender.handle,
-    senderName: req.sender.name,
-    senderPhotoUrl: req.sender.photoUrl,
-    recipientHandle: req.recipient.handle,
-    recipientName: req.recipient.name,
-    recipientPhotoUrl: req.recipient.photoUrl,
-    createdAt: req.createdAt,
-    updatedAt: req.updatedAt,
-  }))
+  try {
+    const payload = await getJson<{ requests: ApiMessageRequest[] }>('/api/messages/requests', true)
+    if (!payload || !payload.requests || !Array.isArray(payload.requests)) {
+      console.error('Invalid message requests payload:', payload)
+      return []
+    }
+    return payload.requests.map(req => ({
+      id: req.id,
+      senderId: req.senderId,
+      recipientId: req.recipientId,
+      content: req.content,
+      status: req.status,
+      direction: req.direction,
+      senderHandle: req.sender.handle,
+      senderName: req.sender.name,
+      senderPhotoUrl: req.sender.photoUrl,
+      recipientHandle: req.recipient.handle,
+      recipientName: req.recipient.name,
+      recipientPhotoUrl: req.recipient.photoUrl,
+      createdAt: req.createdAt,
+      updatedAt: req.updatedAt,
+    }))
+  } catch (error) {
+    console.error('Failed to fetch message requests:', error)
+    return []
+  }
 }
 
 async function sendMessageRequest(recipientHandle: string, content: string): Promise<MessageRequest> {
