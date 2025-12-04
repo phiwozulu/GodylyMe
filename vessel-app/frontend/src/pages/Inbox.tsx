@@ -348,10 +348,17 @@ export default function Inbox() {
       try {
         const data = await contentService.fetchConnectionSuggestions(4)
         if (!cancelled) {
-          // Filter out previously dismissed suggestions
+          // Filter out previously dismissed suggestions and the current user
           try {
             const dismissed = JSON.parse(localStorage.getItem('dismissedSuggestions') || '[]') as string[]
-            const filtered = data.filter((item) => !dismissed.includes(item.id))
+            const filtered = data.filter((item) => {
+              // Exclude dismissed items
+              if (dismissed.includes(item.id)) return false
+              // Exclude current user by comparing normalized handles
+              const itemHandle = normalizeHandle(item.handle)
+              const currentHandle = normalizeHandle(selfHandle)
+              return itemHandle !== currentHandle
+            })
             setSuggestions(
               filtered.map((item) => ({
                 ...item,
@@ -360,8 +367,14 @@ export default function Inbox() {
             )
           } catch (err) {
             console.error('Failed to filter dismissed suggestions', err)
+            // Fallback: at minimum filter out current user
+            const filtered = data.filter((item) => {
+              const itemHandle = normalizeHandle(item.handle)
+              const currentHandle = normalizeHandle(selfHandle)
+              return itemHandle !== currentHandle
+            })
             setSuggestions(
-              data.map((item) => ({
+              filtered.map((item) => ({
                 ...item,
                 isFollowing: contentService.isFollowing(item.handle),
               }))
@@ -385,7 +398,7 @@ export default function Inbox() {
     return () => {
       cancelled = true
     }
-  }, [threadsRefreshKey, activeProfile.id])
+  }, [threadsRefreshKey, activeProfile.id, selfHandle])
 
   React.useEffect(() => {
     if (!isAuthenticated || tab !== 'messages') {
@@ -565,7 +578,11 @@ export default function Inbox() {
 
   async function showMutualConnections(suggestionId: string, suggestionHandle: string) {
     try {
-      // Fetch following and followers to compute mutual connections
+      // Find the suggestion to get the mutual connections count
+      const suggestion = suggestions.find(s => s.id === suggestionId)
+      const mutualCount = suggestion?.mutualConnections || 0
+
+      // Fetch current user's following and followers
       const [followingProfiles, followerProfiles] = await Promise.all([
         contentService.fetchFollowingProfiles(),
         contentService.fetchFollowerProfiles(),
@@ -576,18 +593,23 @@ export default function Inbox() {
         followerProfiles.map(profile => normalizeHandle(profile.handle || profile.id))
       )
 
-      // Find people the current user follows who also follow them back
-      const mutualHandles = followingProfiles
+      // Find people the current user follows who also follow them back (mutual friends)
+      const mutualFriends = followingProfiles
         .filter(profile => {
           const handle = normalizeHandle(profile.handle || profile.id)
           return handle && currentUserFollowerHandles.has(handle)
         })
+
+      // Only show the count that matches the suggestion's mutual connections count
+      // This ensures consistency between the button text and popup
+      const mutualHandles = mutualFriends
+        .slice(0, Math.max(1, mutualCount))
         .map(profile => profile.handle || profile.id)
 
       setMutualConnectionsPopup({
         suggestionId,
         suggestionHandle,
-        mutualHandles: mutualHandles.slice(0, 10), // Show up to 10 mutual connections
+        mutualHandles,
       })
     } catch (error) {
       console.error('Failed to fetch mutual connections:', error)
@@ -776,7 +798,16 @@ export default function Inbox() {
               setNotificationsError(null)
               contentService
                 .fetchNotifications()
-                .then((items) => setNotifications(items))
+                .then((items) => {
+                  try {
+                    const dismissed = JSON.parse(localStorage.getItem('dismissedNotifications') || '[]') as string[]
+                    const filtered = items.filter((item) => !dismissed.includes(item.id))
+                    setNotifications(filtered)
+                  } catch (err) {
+                    console.error('Failed to filter dismissed notifications', err)
+                    setNotifications(items)
+                  }
+                })
                 .catch((error) => {
                   const message = error instanceof Error ? error.message : 'Unable to refresh notifications.'
                   setNotificationsError(message)
@@ -1174,6 +1205,13 @@ export default function Inbox() {
                       >
                         {formatHandle(suggestion.handle)}
                       </button>
+                      <button
+                        type="button"
+                        className={styles.suggestionMeta}
+                        onClick={() => showMutualConnections(suggestion.id, suggestion.handle)}
+                      >
+                        {mutualText}
+                      </button>
                     </div>
                     <div className={styles.suggestionActionsCompact}>
                       <button
@@ -1195,13 +1233,6 @@ export default function Inbox() {
                     </div>
                   </div>
                   {suggestion.summary ? <small className={styles.suggestionSummary}>{suggestion.summary}</small> : null}
-                  <button
-                    type="button"
-                    className={styles.suggestionMeta}
-                    onClick={() => showMutualConnections(suggestion.id, suggestion.handle)}
-                  >
-                    {mutualText}
-                  </button>
                 </div>
               </article>
             )
