@@ -12,11 +12,10 @@ let isInitialized = false
  * Uses CREATE TABLE IF NOT EXISTS so it's safe to run multiple times.
  */
 export async function initDatabase(): Promise<void> {
-  // TEMPORARY: Force re-initialization to recreate engagement tables
   // Skip if already initialized in this instance (warm start)
-  // if (isInitialized) {
-  //   return
-  // }
+  if (isInitialized) {
+    return
+  }
 
   const pool = getPgPool()
 
@@ -85,11 +84,10 @@ export async function initDatabase(): Promise<void> {
     await pool.query('CREATE INDEX IF NOT EXISTS idx_videos_user_id ON videos(user_id);')
     await pool.query('CREATE INDEX IF NOT EXISTS idx_videos_created_at ON videos(created_at DESC);')
 
-    // 4. Video engagement tables - unconditionally recreate to fix schema
-    console.log('Recreating video_likes table...')
-    await pool.query('DROP TABLE IF EXISTS video_likes CASCADE;')
+    // 4. Video engagement tables - create if missing and migrate without wiping data
+    console.log('Ensuring video_likes table exists...')
     await pool.query(`
-      CREATE TABLE video_likes (
+      CREATE TABLE IF NOT EXISTS video_likes (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         video_id TEXT NOT NULL,
         user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -97,14 +95,23 @@ export async function initDatabase(): Promise<void> {
         UNIQUE(video_id, user_id)
       );
     `)
-    await pool.query('CREATE INDEX idx_video_likes_video ON video_likes(video_id);')
-    await pool.query('CREATE INDEX idx_video_likes_user ON video_likes(user_id);')
-    console.log('video_likes table recreated')
-
-    console.log('Recreating video_shares table...')
-    await pool.query('DROP TABLE IF EXISTS video_shares CASCADE;')
     await pool.query(`
-      CREATE TABLE video_shares (
+      DO $$
+      BEGIN
+        IF EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'video_likes' AND column_name = 'video_id' AND data_type <> 'text'
+        ) THEN
+          ALTER TABLE video_likes ALTER COLUMN video_id TYPE TEXT USING video_id::text;
+        END IF;
+      END $$;
+    `)
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_video_likes_video ON video_likes(video_id);')
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_video_likes_user ON video_likes(user_id);')
+
+    console.log('Ensuring video_shares table exists...')
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS video_shares (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         video_id TEXT NOT NULL,
         user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -112,14 +119,12 @@ export async function initDatabase(): Promise<void> {
         UNIQUE(video_id, user_id)
       );
     `)
-    await pool.query('CREATE INDEX idx_video_shares_video ON video_shares(video_id);')
-    await pool.query('CREATE INDEX idx_video_shares_user ON video_shares(user_id);')
-    console.log('video_shares table recreated')
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_video_shares_video ON video_shares(video_id);')
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_video_shares_user ON video_shares(user_id);')
 
-    console.log('Recreating video_comments table...')
-    await pool.query('DROP TABLE IF EXISTS video_comments CASCADE;')
+    console.log('Ensuring video_comments table exists...')
     await pool.query(`
-      CREATE TABLE video_comments (
+      CREATE TABLE IF NOT EXISTS video_comments (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         video_id TEXT NOT NULL,
         user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -127,9 +132,8 @@ export async function initDatabase(): Promise<void> {
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
     `)
-    await pool.query('CREATE INDEX idx_video_comments_video ON video_comments(video_id);')
-    await pool.query('CREATE INDEX idx_video_comments_user ON video_comments(user_id);')
-    console.log('video_comments table recreated')
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_video_comments_video ON video_comments(video_id);')
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_video_comments_user ON video_comments(user_id);')
 
     // 5. Messaging tables
     await pool.query(`
@@ -237,8 +241,7 @@ export async function initDatabase(): Promise<void> {
     await pool.query('CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at DESC);')
 
     // Mark as initialized
-    // TEMPORARY: Disabled to force table recreation
-    // isInitialized = true
+    isInitialized = true
   } catch (error) {
     console.error('Database initialization failed:', error)
     throw error
