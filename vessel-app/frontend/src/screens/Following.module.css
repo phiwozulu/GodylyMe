@@ -22,6 +22,16 @@
   font-size: 1.1rem;
 }
 
+.empty {
+  padding: 2.4rem 1.8rem;
+  border-radius: 20px;
+  border: 1px dashed var(--border-muted);
+  text-align: center;
+  color: var(--text-secondary);
+  background: rgba(240, 236, 229, 0.95);
+  margin: 2rem 1rem;
+}
+
 .viewport {
   position: relative;
   --frame-min-width: 360px;

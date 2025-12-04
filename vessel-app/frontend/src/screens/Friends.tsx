@@ -89,8 +89,16 @@ export default function Friends() {
       if (!mounted) return
       try {
         if (!contentService.isAuthenticated()) return
-        const followingFeed = await contentService.fetchFollowingFeed()
+        const [followingProfiles, followerProfiles, followingFeed] = await Promise.all([
+          contentService.fetchFollowingProfiles(),
+          contentService.fetchFollowerProfiles(),
+          contentService.fetchFollowingFeed(),
+        ])
         if (mounted && followingFeed.length) {
+          // Update mutual sets with fresh data
+          setMutualAccounts(buildMutualAccountSet(followingProfiles ?? [], followerProfiles ?? []))
+          setMutualHandles(buildMutualHandleSet(followingProfiles ?? [], followerProfiles ?? []))
+
           setClips((current) => {
             // Only add new videos that aren't already in the feed
             const existingIds = new Set(current.map(v => v.id))
