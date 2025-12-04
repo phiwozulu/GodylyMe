@@ -84,178 +84,51 @@ export async function initDatabase(): Promise<void> {
     await pool.query('CREATE INDEX IF NOT EXISTS idx_videos_user_id ON videos(user_id);')
     await pool.query('CREATE INDEX IF NOT EXISTS idx_videos_created_at ON videos(created_at DESC);')
 
-    // 4. Video engagement tables
-    // Try to alter existing tables first, if that fails, create new ones
-    try {
-      // Try to check if video_likes exists and alter the column type
-      const likesTableExists = await pool.query(`
-        SELECT EXISTS (
-          SELECT FROM information_schema.tables
-          WHERE table_name = 'video_likes'
-        );
-      `)
+    // 4. Video engagement tables - unconditionally recreate to fix schema
+    console.log('Recreating video_likes table...')
+    await pool.query('DROP TABLE IF EXISTS video_likes CASCADE;')
+    await pool.query(`
+      CREATE TABLE video_likes (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        video_id TEXT NOT NULL,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE(video_id, user_id)
+      );
+    `)
+    await pool.query('CREATE INDEX idx_video_likes_video ON video_likes(video_id);')
+    await pool.query('CREATE INDEX idx_video_likes_user ON video_likes(user_id);')
+    console.log('video_likes table recreated')
 
-      if (likesTableExists.rows[0].exists) {
-        // Check if video_id is UUID type
-        const columnType = await pool.query(`
-          SELECT data_type FROM information_schema.columns
-          WHERE table_name = 'video_likes' AND column_name = 'video_id';
-        `)
+    console.log('Recreating video_shares table...')
+    await pool.query('DROP TABLE IF EXISTS video_shares CASCADE;')
+    await pool.query(`
+      CREATE TABLE video_shares (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        video_id TEXT NOT NULL,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE(video_id, user_id)
+      );
+    `)
+    await pool.query('CREATE INDEX idx_video_shares_video ON video_shares(video_id);')
+    await pool.query('CREATE INDEX idx_video_shares_user ON video_shares(user_id);')
+    console.log('video_shares table recreated')
 
-        if (columnType.rows[0]?.data_type === 'uuid') {
-          // Drop and recreate only if it's UUID
-          console.log('Migrating video_likes to TEXT video_id...')
-          await pool.query('DROP TABLE IF EXISTS video_likes CASCADE;')
-          await pool.query(`
-            CREATE TABLE video_likes (
-              id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-              video_id TEXT NOT NULL,
-              user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-              created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-              UNIQUE(video_id, user_id)
-            );
-          `)
-        }
-      } else {
-        // Create new table
-        await pool.query(`
-          CREATE TABLE video_likes (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            video_id TEXT NOT NULL,
-            user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            UNIQUE(video_id, user_id)
-          );
-        `)
-      }
-    } catch (err) {
-      console.error('Error migrating video_likes:', err)
-      // If anything fails, try to create fresh
-      await pool.query('DROP TABLE IF EXISTS video_likes CASCADE;')
-      await pool.query(`
-        CREATE TABLE video_likes (
-          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-          video_id TEXT NOT NULL,
-          user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-          UNIQUE(video_id, user_id)
-        );
-      `)
-    }
-
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_video_likes_video ON video_likes(video_id);')
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_video_likes_user ON video_likes(user_id);')
-
-    // Same for video_shares
-    try {
-      const sharesTableExists = await pool.query(`
-        SELECT EXISTS (
-          SELECT FROM information_schema.tables
-          WHERE table_name = 'video_shares'
-        );
-      `)
-
-      if (sharesTableExists.rows[0].exists) {
-        const columnType = await pool.query(`
-          SELECT data_type FROM information_schema.columns
-          WHERE table_name = 'video_shares' AND column_name = 'video_id';
-        `)
-
-        if (columnType.rows[0]?.data_type === 'uuid') {
-          console.log('Migrating video_shares to TEXT video_id...')
-          await pool.query('DROP TABLE IF EXISTS video_shares CASCADE;')
-          await pool.query(`
-            CREATE TABLE video_shares (
-              id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-              video_id TEXT NOT NULL,
-              user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-              created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-              UNIQUE(video_id, user_id)
-            );
-          `)
-        }
-      } else {
-        await pool.query(`
-          CREATE TABLE video_shares (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            video_id TEXT NOT NULL,
-            user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            UNIQUE(video_id, user_id)
-          );
-        `)
-      }
-    } catch (err) {
-      console.error('Error migrating video_shares:', err)
-      await pool.query('DROP TABLE IF EXISTS video_shares CASCADE;')
-      await pool.query(`
-        CREATE TABLE video_shares (
-          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-          video_id TEXT NOT NULL,
-          user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-          UNIQUE(video_id, user_id)
-        );
-      `)
-    }
-
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_video_shares_video ON video_shares(video_id);')
-
-    // Video comments table
-    try {
-      const commentsTableExists = await pool.query(`
-        SELECT EXISTS (
-          SELECT FROM information_schema.tables
-          WHERE table_name = 'video_comments'
-        );
-      `)
-
-      if (commentsTableExists.rows[0].exists) {
-        const columnType = await pool.query(`
-          SELECT data_type FROM information_schema.columns
-          WHERE table_name = 'video_comments' AND column_name = 'video_id';
-        `)
-
-        if (columnType.rows[0]?.data_type === 'uuid') {
-          console.log('Migrating video_comments to TEXT video_id...')
-          await pool.query('DROP TABLE IF EXISTS video_comments CASCADE;')
-          await pool.query(`
-            CREATE TABLE video_comments (
-              id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-              video_id TEXT NOT NULL,
-              user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-              body TEXT NOT NULL,
-              created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-            );
-          `)
-        }
-      } else {
-        await pool.query(`
-          CREATE TABLE video_comments (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            video_id TEXT NOT NULL,
-            user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-            body TEXT NOT NULL,
-            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-          );
-        `)
-      }
-    } catch (err) {
-      console.error('Error migrating video_comments:', err)
-      await pool.query('DROP TABLE IF EXISTS video_comments CASCADE;')
-      await pool.query(`
-        CREATE TABLE video_comments (
-          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-          video_id TEXT NOT NULL,
-          user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-          body TEXT NOT NULL,
-          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        );
-      `)
-    }
-
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_video_comments_video ON video_comments(video_id);')
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_video_comments_user ON video_comments(user_id);')
+    console.log('Recreating video_comments table...')
+    await pool.query('DROP TABLE IF EXISTS video_comments CASCADE;')
+    await pool.query(`
+      CREATE TABLE video_comments (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        video_id TEXT NOT NULL,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        body TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `)
+    await pool.query('CREATE INDEX idx_video_comments_video ON video_comments(video_id);')
+    await pool.query('CREATE INDEX idx_video_comments_user ON video_comments(user_id);')
+    console.log('video_comments table recreated')
 
     // 5. Messaging tables
     await pool.query(`
