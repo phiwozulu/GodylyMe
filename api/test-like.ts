@@ -2,78 +2,84 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getPgPool } from './_lib/clients'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-
   const pool = getPgPool()
-  const results: any = {}
+  const results: string[] = []
 
   try {
+    results.push('=== LIKE FUNCTIONALITY TEST ===\n')
+
     // 1. Check if video_likes table exists and its schema
-    results.step1 = 'Checking video_likes table schema...'
+    results.push('STEP 1: Checking video_likes table schema...')
     const tableCheck = await pool.query(`
       SELECT column_name, data_type
       FROM information_schema.columns
       WHERE table_name = 'video_likes'
       ORDER BY ordinal_position
     `)
-    results.video_likes_schema = tableCheck.rows
-    results.video_likes_exists = tableCheck.rows.length > 0
+
+    if (tableCheck.rows.length === 0) {
+      results.push('❌ video_likes table DOES NOT EXIST')
+    } else {
+      results.push('✓ video_likes table EXISTS')
+      results.push('Schema:')
+      tableCheck.rows.forEach(row => {
+        results.push(`  - ${row.column_name}: ${row.data_type}`)
+      })
+
+      const videoIdType = tableCheck.rows.find(r => r.column_name === 'video_id')?.data_type
+      if (videoIdType === 'uuid') {
+        results.push('❌ PROBLEM FOUND: video_id is UUID (should be TEXT)')
+      } else if (videoIdType === 'text') {
+        results.push('✓ video_id is TEXT (correct)')
+      }
+    }
 
     // 2. Get a sample video
-    results.step2 = 'Getting sample video...'
+    results.push('\nSTEP 2: Getting sample video...')
     const videoResult = await pool.query('SELECT id, user_id FROM videos LIMIT 1')
     if (videoResult.rows.length === 0) {
-      results.error = 'No videos in database'
-      return res.json(results)
+      results.push('❌ No videos in database')
+      return res.setHeader('Content-Type', 'text/plain').send(results.join('\n'))
     }
     const sampleVideo = videoResult.rows[0]
-    results.sample_video = {
-      id: sampleVideo.id,
-      id_type: typeof sampleVideo.id,
-      user_id: sampleVideo.user_id
-    }
+    results.push(`✓ Found video: ${sampleVideo.id} (type: ${typeof sampleVideo.id})`)
 
     // 3. Try to insert a test like
-    results.step3 = 'Testing like insertion...'
+    results.push('\nSTEP 3: Testing like insertion...')
     try {
       await pool.query(`
         INSERT INTO video_likes (video_id, user_id, created_at)
         VALUES ($1, $2, NOW())
         ON CONFLICT (video_id, user_id) DO NOTHING
       `, [sampleVideo.id, sampleVideo.user_id])
-      results.like_insert = 'SUCCESS'
-    } catch (err) {
-      results.like_insert_error = {
-        message: err instanceof Error ? err.message : String(err),
-        code: (err as any).code,
-        detail: (err as any).detail
-      }
+      results.push('✓ Like inserted successfully')
+    } catch (err: any) {
+      results.push('❌ Like insertion FAILED')
+      results.push(`Error: ${err.message}`)
+      if (err.code) results.push(`Code: ${err.code}`)
+      if (err.detail) results.push(`Detail: ${err.detail}`)
     }
 
     // 4. Try to count likes
-    results.step4 = 'Testing like count...'
+    results.push('\nSTEP 4: Testing like count...')
     try {
       const countResult = await pool.query(
         'SELECT COUNT(*)::int as count FROM video_likes WHERE video_id = $1',
         [sampleVideo.id]
       )
-      results.like_count = countResult.rows[0].count
-    } catch (err) {
-      results.count_error = err instanceof Error ? err.message : String(err)
+      results.push(`✓ Like count: ${countResult.rows[0].count}`)
+    } catch (err: any) {
+      results.push(`❌ Count failed: ${err.message}`)
     }
 
-    // 5. Check if table needs to be recreated
-    const videoIdType = tableCheck.rows.find(r => r.column_name === 'video_id')?.data_type
-    results.video_id_column_type = videoIdType
-    results.needs_recreation = videoIdType === 'uuid'
+    results.push('\n=== TEST COMPLETE ===')
 
-    return res.json(results)
+    return res.setHeader('Content-Type', 'text/plain').send(results.join('\n'))
 
-  } catch (error) {
-    return res.status(500).json({
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      results
-    })
+  } catch (error: any) {
+    results.push('\n❌ FATAL ERROR')
+    results.push(`Error: ${error.message}`)
+    if (error.stack) results.push(`\nStack:\n${error.stack}`)
+    return res.status(500).setHeader('Content-Type', 'text/plain').send(results.join('\n'))
   }
 }
