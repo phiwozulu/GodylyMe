@@ -40,11 +40,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       )
     `)
 
-    res.setHeader('Content-Type', 'text/plain')
-    return res.send('SUCCESS! Tables recreated. Now try liking and commenting.')
+    res.setHeader('Content-Type', 'text/html')
+    return res.send(`
+      <!DOCTYPE html>
+      <html>
+      <body style="font-family: monospace; padding: 40px; background: #0a0a0a; color: #00ff00;">
+        <h1>✓ SUCCESS!</h1>
+        <p>Tables have been recreated with correct schema.</p>
+        <p>Now close your app and reopen it, then try liking and commenting.</p>
+      </body>
+      </html>
+    `)
 
   } catch (error: any) {
-    res.setHeader('Content-Type', 'text/plain')
-    return res.status(500).send(`FAILED: ${error.message}\n\n${error.stack}`)
+    res.setHeader('Content-Type', 'text/html')
+    return res.status(500).send(`
+      <!DOCTYPE html>
+      <html>
+      <body style="font-family: monospace; padding: 40px; background: #0a0a0a; color: #ff0000;">
+        <h1>✗ FAILED</h1>
+        <pre>${error.message}\n\n${error.stack}</pre>
+      </body>
+      </html>
+    `)
   }
 }
