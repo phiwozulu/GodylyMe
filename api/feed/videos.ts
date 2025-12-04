@@ -140,18 +140,22 @@ async function handleUpload(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ message: 'Video file is required' })
     }
 
+    // Type assertion after null check
+    const video = videoFile as { buffer: Buffer; filename: string; mimetype: string }
+
     // Upload video to Vercel Blob
-    const videoBlob = await put(`videos/${userId}/${Date.now()}_${videoFile!.filename}`, videoFile!.buffer, {
+    const videoBlob = await put(`videos/${userId}/${Date.now()}_${video.filename}`, video.buffer, {
       access: 'public',
-      contentType: videoFile!.mimetype,
+      contentType: video.mimetype,
     })
 
     // Upload thumbnail if provided
     let thumbnailUrl = 'https://picsum.photos/seed/video/640/360'
     if (thumbnailFile) {
-      const thumbnailBlob = await put(`thumbnails/${userId}/${Date.now()}_${thumbnailFile!.filename}`, thumbnailFile!.buffer, {
+      const thumbnail = thumbnailFile as { buffer: Buffer; filename: string; mimetype: string }
+      const thumbnailBlob = await put(`thumbnails/${userId}/${Date.now()}_${thumbnail.filename}`, thumbnail.buffer, {
         access: 'public',
-        contentType: thumbnailFile!.mimetype,
+        contentType: thumbnail.mimetype,
       })
       thumbnailUrl = thumbnailBlob.url
     }
