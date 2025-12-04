@@ -37,7 +37,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const pool = getPgPool()
 
   try {
-    // Simple: just try to ensure table exists every time
+    // Just try the operation - let it fail if table is wrong
     await pool.query(`
       CREATE TABLE IF NOT EXISTS video_likes (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -79,9 +79,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ message: 'Method not allowed' })
   } catch (error: any) {
     console.error('[LIKE] Error:', error)
+
+    // Show detailed error to user
+    const errorMessage = error.message || 'Unknown error'
+    const errorDetail = error.detail || ''
+    const errorCode = error.code || ''
+
     return res.status(500).json({
-      message: error.message || 'Failed',
-      error: String(error)
+      message: `Database error: ${errorMessage}`,
+      detail: errorDetail,
+      code: errorCode,
+      fullError: String(error)
     })
   }
 }
