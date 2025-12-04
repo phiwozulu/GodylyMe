@@ -179,22 +179,26 @@
   left: 0;
   right: 0;
   top: 0; /* positioned relative to the .screen container */
+  bottom: 0; /* Extend to full height to allow scrolling */
   display: flex;
   justify-content: center;
   align-items: flex-start; /* keep contents near the top */
   padding-top: 20px; /* ~20px gap between the search field and results */
   pointer-events: none;
   z-index: 12;
+  overflow: hidden; /* Prevent parent from scrolling */
 }
 
 .searchModal {
   pointer-events: all; /* allow interaction inside the modal */
   width: 100%;
   max-width: 420px;
+  max-height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.6rem;
+  overflow: hidden; /* Prevent modal itself from scrolling */
 }
 
 .inlineResults {

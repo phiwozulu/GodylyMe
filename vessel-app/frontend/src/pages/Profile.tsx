@@ -19,6 +19,7 @@ type OverlayEntry = {
   label: string
   route: string
   subtitle?: string | null
+  handle?: string
 }
 
 type OverlayProps = {
@@ -26,6 +27,10 @@ type OverlayProps = {
   entries: OverlayEntry[]
   onSelect: (route: string) => void
   onClose: () => void
+  isFollowingList?: boolean
+  isFollowersList?: boolean
+  onUnfollow?: (userId: string, handle: string) => void
+  onRemoveFollower?: (userId: string, handle: string) => void
 }
 
 const normalize = (value?: string) => (value || "").toLowerCase()
@@ -250,6 +255,7 @@ export default function Profile() {
           label: ensureHandle(handle),
           route: `/profile/${handle}`,
           subtitle: user.name ?? null,
+          handle,
         }
       })
       .filter((entry): entry is OverlayEntry => Boolean(entry))
@@ -267,6 +273,7 @@ export default function Profile() {
           id: user.id,
           label: ensureHandle(handle),
           route: `/profile/${handle}`,
+          handle,
           subtitle: user.name ?? null,
         }
       })
@@ -333,6 +340,30 @@ export default function Profile() {
     }
     navigate(`/inbox?compose=${encodeURIComponent(targetHandle)}`)
   }, [canMessageTarget, navigate, targetHandle])
+
+  const handleUnfollow = React.useCallback(async (userId: string, handle: string) => {
+    try {
+      await contentService.unfollowUser(handle)
+      // Update local state
+      setViewerFollowing(current => current.filter(u => u.id !== userId))
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unable to unfollow. Please try again.'
+      window.alert(message)
+    }
+  }, [])
+
+  const handleRemoveFollower = React.useCallback(async (userId: string, handle: string) => {
+    try {
+      // For now, removing a follower is the same as blocking/unfollowing from their side
+      // You may need to implement a specific API endpoint for this
+      await contentService.unfollowUser(handle)
+      // Update local state
+      setViewerFollowers(current => current.filter(u => u.id !== userId))
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unable to remove follower. Please try again.'
+      window.alert(message)
+    }
+  }, [])
 
   const handleGridKey = React.useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>, clipId: string, state?: { context: unknown }) => {
@@ -605,6 +636,8 @@ export default function Profile() {
             navigate(route)
           }}
           onClose={() => setShowFollowingList(false)}
+          isFollowingList={true}
+          onUnfollow={handleUnfollow}
         />
       ) : null}
       {showFollowersList && canShowFollowLists ? (
@@ -616,6 +649,8 @@ export default function Profile() {
             navigate(route)
           }}
           onClose={() => setShowFollowersList(false)}
+          isFollowersList={true}
+          onRemoveFollower={handleRemoveFollower}
         />
       ) : null}
     </div>
@@ -641,28 +676,75 @@ function Stat({
   )
 }
 
-function Overlay({ title, entries, onSelect, onClose }: OverlayProps) {
+function Overlay({ title, entries, onSelect, onClose, isFollowingList, isFollowersList, onUnfollow, onRemoveFollower }: OverlayProps) {
+  const [busyIds, setBusyIds] = React.useState<Set<string>>(new Set())
+
+  const handleAction = async (userId: string, handle: string, action: 'unfollow' | 'remove') => {
+    setBusyIds(prev => new Set(prev).add(userId))
+    try {
+      if (action === 'unfollow' && onUnfollow) {
+        await onUnfollow(userId, handle)
+      } else if (action === 'remove' && onRemoveFollower) {
+        await onRemoveFollower(userId, handle)
+      }
+    } finally {
+      setBusyIds(prev => {
+        const next = new Set(prev)
+        next.delete(userId)
+        return next
+      })
+    }
+  }
+
   return (
-    <div className={styles.overlayBackdrop}>
-      <div className={styles.overlayPanel}>
+    <div className={styles.overlayBackdrop} onClick={onClose}>
+      <div className={styles.overlayPanel} onClick={(e) => e.stopPropagation()}>
         <div className={styles.overlayHeader}>
           <h3 className={styles.overlayTitle}>{title}</h3>
           <button type="button" className={styles.overlayClose} onClick={onClose} aria-label="Close">
-            x
+            ×
           </button>
         </div>
         <ul className={styles.overlayList}>
-          {entries.map((entry) => (
-            <li key={entry.id}>
-              <button type="button" className={styles.overlayItem} onClick={() => onSelect(entry.route)}>
-                <div className={styles.overlayAvatar}>{entry.label.slice(1, 2).toUpperCase()}</div>
-                <div>
-                  <div className={styles.overlayHandle}>{entry.label}</div>
-                  <div className={styles.overlayMeta}>{entry.subtitle || 'Faith-filled creator'}</div>
-                </div>
-              </button>
-            </li>
-          ))}
+          {entries.map((entry) => {
+            const isBusy = busyIds.has(entry.id)
+            return (
+              <li key={entry.id} className={styles.overlayListItem}>
+                <button
+                  type="button"
+                  className={styles.overlayItem}
+                  onClick={() => onSelect(entry.route)}
+                  disabled={isBusy}
+                >
+                  <div className={styles.overlayAvatar}>{entry.label.slice(1, 2).toUpperCase()}</div>
+                  <div className={styles.overlayInfo}>
+                    <div className={styles.overlayHandle}>{entry.label}</div>
+                    <div className={styles.overlayMeta}>{entry.subtitle || 'Faith-filled creator'}</div>
+                  </div>
+                </button>
+                {isFollowingList && entry.handle && (
+                  <button
+                    type="button"
+                    className={styles.overlayUnfollowButton}
+                    onClick={() => handleAction(entry.id, entry.handle!, 'unfollow')}
+                    disabled={isBusy}
+                  >
+                    {isBusy ? 'Unfollowing...' : 'Unfollow'}
+                  </button>
+                )}
+                {isFollowersList && entry.handle && (
+                  <button
+                    type="button"
+                    className={styles.overlayRemoveButton}
+                    onClick={() => handleAction(entry.id, entry.handle!, 'remove')}
+                    disabled={isBusy}
+                  >
+                    {isBusy ? 'Removing...' : 'Remove'}
+                  </button>
+                )}
+              </li>
+            )
+          })}
         </ul>
       </div>
     </div>

@@ -578,10 +578,6 @@ export default function Inbox() {
 
   async function showMutualConnections(suggestionId: string, suggestionHandle: string) {
     try {
-      // Find the suggestion to get the mutual connections count
-      const suggestion = suggestions.find(s => s.id === suggestionId)
-      const mutualCount = suggestion?.mutualConnections || 0
-
       // Fetch current user's following and followers
       const [followingProfiles, followerProfiles] = await Promise.all([
         contentService.fetchFollowingProfiles(),
@@ -594,22 +590,19 @@ export default function Inbox() {
       )
 
       // Find people the current user follows who also follow them back (mutual friends)
+      // These are the people who know both you and potentially the suggested user
       const mutualFriends = followingProfiles
         .filter(profile => {
           const handle = normalizeHandle(profile.handle || profile.id)
           return handle && currentUserFollowerHandles.has(handle)
         })
-
-      // Only show the count that matches the suggestion's mutual connections count
-      // This ensures consistency between the button text and popup
-      const mutualHandles = mutualFriends
-        .slice(0, Math.max(1, mutualCount))
+        .slice(0, 10) // Show up to 10 mutual connections
         .map(profile => profile.handle || profile.id)
 
       setMutualConnectionsPopup({
         suggestionId,
         suggestionHandle,
-        mutualHandles,
+        mutualHandles: mutualFriends,
       })
     } catch (error) {
       console.error('Failed to fetch mutual connections:', error)

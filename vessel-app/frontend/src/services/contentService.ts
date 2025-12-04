@@ -612,9 +612,10 @@ async function requestJson<T>(path: string, init: RequestInit = {}, includeAuth 
 
   if (!response.ok) {
     const message = typeof payload === 'object' && payload && 'message' in payload ? (payload as any).message : null
-    const error = new Error(message || 'Request failed. Please try again.')
+    const error = new Error(message || `Request failed with status ${response.status}. Please try again.`)
     ;(error as any).status = response.status
     ;(error as any).payload = payload
+    console.error('API request failed:', { path, status: response.status, payload, headers: Object.fromEntries(response.headers.entries()) })
     throw error
   }
 

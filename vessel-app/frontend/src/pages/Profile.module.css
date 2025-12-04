@@ -464,23 +464,28 @@
 .overlayBackdrop {
   position: fixed;
   inset: 0;
-  background: rgba(5, 6, 10, 0.76);
+  background: rgba(10, 12, 16, 0.45);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
+  padding: clamp(0.8rem, 3vw, 1.6rem);
   z-index: 50;
+  overflow-y: auto;
 }
 
 .overlayPanel {
-  width: min(500px, 92vw);
-  max-height: 60vh;
-  background: rgba(16, 18, 28, 0.96);
-  border-radius: 24px 24px 0 0;
-  padding: 1.5rem;
+  width: min(540px, 94vw);
+  max-height: 90vh;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 22px;
+  padding: clamp(1.05rem, 3.2vw, 1.55rem);
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  overflow: hidden;
+  gap: 1.1rem;
+  overflow-y: auto;
 }
 
 .overlayHeader {
@@ -515,17 +520,29 @@
   padding: 0;
 }
 
+.overlayListItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
 .overlayItem {
   display: flex;
   gap: 0.75rem;
   align-items: center;
-  padding: 0.45rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex: 1;
   border: none;
   background: transparent;
   text-align: left;
-  width: 100%;
   cursor: pointer;
+  padding: 0;
+}
+
+.overlayItem:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .overlayAvatar {
@@ -538,6 +555,12 @@
   justify-content: center;
   font-weight: 600;
   color: var(--text-primary);
+  flex-shrink: 0;
+}
+
+.overlayInfo {
+  flex: 1;
+  min-width: 0;
 }
 
 .overlayHandle {
@@ -548,6 +571,52 @@
 .overlayMeta {
   font-size: 0.75rem;
   color: var(--text-muted);
+}
+
+.overlayUnfollowButton {
+  padding: 0.45rem 1rem;
+  border-radius: 20px;
+  border: 1px solid #8B7355;
+  background: transparent;
+  color: #8B7355;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.overlayUnfollowButton:hover:not(:disabled) {
+  background: rgba(139, 115, 85, 0.1);
+  transform: translateY(-1px);
+}
+
+.overlayUnfollowButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.overlayRemoveButton {
+  padding: 0.45rem 1rem;
+  border-radius: 20px;
+  border: 1px solid #fff;
+  background: #dc3545;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.overlayRemoveButton:hover:not(:disabled) {
+  background: #c82333;
+  transform: translateY(-1px);
+}
+
+.overlayRemoveButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .authBackdrop {
