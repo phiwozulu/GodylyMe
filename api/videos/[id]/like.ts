@@ -1,113 +1,119 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { compose, cors, errorHandler, requireAuth } from '../../_lib/serverless'
 import { getPgPool } from '../../_lib/clients'
-import { initDatabase } from '../../_lib/initDatabase'
+import * as jwt from 'jsonwebtoken'
 
-async function handler(req: VercelRequest, res: VercelResponse) {
-  console.log('[LIKE] Starting like handler for video:', req.query.id, 'method:', req.method)
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET
+  if (!secret) {
+    throw new Error('JWT_SECRET is not configured')
+  }
+  return secret
+}
 
-  try {
-    await initDatabase()
-    console.log('[LIKE] Database initialized')
-  } catch (dbError) {
-    console.error('[LIKE] Database initialization failed:', dbError)
-    return res.status(500).json({ message: 'Database initialization failed', error: String(dbError) })
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Methods', 'POST, DELETE, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end()
   }
 
-  const userId = (req as any).userId
-  const { id } = req.query
+  console.log('[LIKE] Request:', req.method, 'Video ID:', req.query.id)
+
+  // Get video ID
+  const { id: videoId } = req.query
+  if (!videoId || typeof videoId !== 'string') {
+    console.error('[LIKE] Invalid video ID')
+    return res.status(400).json({ message: 'Video ID is required' })
+  }
+
+  // Get user from JWT
+  const authHeader = req.headers.authorization
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    console.error('[LIKE] No authorization header')
+    return res.status(401).json({ message: 'Unauthorized' })
+  }
+
+  let userId: string
+  try {
+    const token = authHeader.substring(7)
+    const payload = jwt.verify(token, getJwtSecret()) as { sub: string }
+    userId = payload.sub
+    console.log('[LIKE] User ID:', userId)
+  } catch (error) {
+    console.error('[LIKE] Invalid token:', error)
+    return res.status(401).json({ message: 'Invalid token' })
+  }
+
   const pool = getPgPool()
 
-  console.log('[LIKE] User ID:', userId, 'Video ID:', id)
-
-  if (!id || typeof id !== 'string') {
-    console.error('[LIKE] Invalid video ID')
-    return res.status(400).json({ message: 'Video ID parameter is required' })
-  }
-
   try {
-    // Check if video exists
-    console.log('[LIKE] Checking if video exists:', id)
-    const videoResult = await pool.query(
-      'SELECT user_id FROM videos WHERE id = $1',
-      [id]
-    )
-
-    if (videoResult.rows.length === 0) {
-      console.error('[LIKE] Video not found:', id)
+    // Verify video exists
+    const videoCheck = await pool.query('SELECT id, user_id FROM videos WHERE id = $1', [videoId])
+    if (videoCheck.rows.length === 0) {
+      console.error('[LIKE] Video not found:', videoId)
       return res.status(404).json({ message: 'Video not found' })
     }
-
-    console.log('[LIKE] Video found, owner:', videoResult.rows[0].user_id)
-
-    const videoOwnerId = videoResult.rows[0].user_id
+    const videoOwnerId = videoCheck.rows[0].user_id
 
     if (req.method === 'POST') {
-      // Like video
-      console.log('[LIKE] Inserting like:', { videoId: id, userId })
+      // Add like
+      console.log('[LIKE] Adding like for user:', userId, 'video:', videoId)
+
       await pool.query(`
-        INSERT INTO video_likes (video_id, user_id)
-        VALUES ($1, $2)
+        INSERT INTO video_likes (video_id, user_id, created_at)
+        VALUES ($1, $2, NOW())
         ON CONFLICT (video_id, user_id) DO NOTHING
-      `, [id, userId])
-      console.log('[LIKE] Like inserted successfully')
+      `, [videoId, userId])
 
       // Create notification if not self-like
       if (videoOwnerId !== userId) {
-        console.log('[LIKE] Creating notification for owner:', videoOwnerId)
         await pool.query(`
-          INSERT INTO notifications (user_id, type, actor_id, target_id)
-          VALUES ($1, 'like', $2, $3)
-        `, [videoOwnerId, userId, id])
-        console.log('[LIKE] Notification created')
+          INSERT INTO notifications (user_id, type, actor_id, target_id, created_at)
+          VALUES ($1, 'like', $2, $3, NOW())
+        `, [videoOwnerId, userId, videoId])
       }
 
-      // Get updated like count
-      console.log('[LIKE] Getting like count')
+      // Get count
       const countResult = await pool.query(
-        'SELECT COUNT(*) as count FROM video_likes WHERE video_id = $1',
-        [id]
+        'SELECT COUNT(*)::int as count FROM video_likes WHERE video_id = $1',
+        [videoId]
       )
-      const count = parseInt(countResult.rows[0].count) || 0
-      console.log('[LIKE] Like count:', count)
+      const count = countResult.rows[0].count
 
-      res.json({ count })
+      console.log('[LIKE] Like added, total count:', count)
+      return res.json({ count })
+
     } else if (req.method === 'DELETE') {
-      // Unlike video
-      console.log('[LIKE] Deleting like:', { videoId: id, userId })
-      await pool.query(`
-        DELETE FROM video_likes
-        WHERE video_id = $1 AND user_id = $2
-      `, [id, userId])
-      console.log('[LIKE] Like deleted successfully')
+      // Remove like
+      console.log('[LIKE] Removing like for user:', userId, 'video:', videoId)
 
-      // Get updated like count
-      console.log('[LIKE] Getting like count')
-      const countResult = await pool.query(
-        'SELECT COUNT(*) as count FROM video_likes WHERE video_id = $1',
-        [id]
+      await pool.query(
+        'DELETE FROM video_likes WHERE video_id = $1 AND user_id = $2',
+        [videoId, userId]
       )
-      const count = parseInt(countResult.rows[0].count) || 0
-      console.log('[LIKE] Like count:', count)
 
-      res.json({ count })
+      // Get count
+      const countResult = await pool.query(
+        'SELECT COUNT(*)::int as count FROM video_likes WHERE video_id = $1',
+        [videoId]
+      )
+      const count = countResult.rows[0].count
+
+      console.log('[LIKE] Like removed, total count:', count)
+      return res.json({ count })
+
     } else {
-      console.error('[LIKE] Method not allowed:', req.method)
       return res.status(405).json({ message: 'Method not allowed' })
     }
+
   } catch (error) {
-    console.error('[LIKE] Error managing video like:', error)
-    console.error('[LIKE] Error details:', {
-      name: error instanceof Error ? error.name : 'Unknown',
-      message: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
-    })
-    const message = error instanceof Error ? error.message : 'Failed to update like status'
+    console.error('[LIKE] Error:', error)
     return res.status(500).json({
-      message,
+      message: error instanceof Error ? error.message : 'Internal server error',
       error: String(error)
     })
   }
 }
-
-export default compose(cors, errorHandler, requireAuth)(handler)
