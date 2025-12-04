@@ -1,18 +1,24 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { compose, cors, errorHandler } from './_lib/serverless'
 import { getPgPool } from './_lib/clients'
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+async function handler(req: VercelRequest, res: VercelResponse) {
+  console.log('[MIGRATE] Starting migration endpoint...')
+
   const pool = getPgPool()
   const logs: string[] = []
 
   try {
     logs.push('Starting migration...')
+    console.log('[MIGRATE] Starting migration...')
 
     // Drop and recreate video_likes table
     logs.push('Dropping video_likes table...')
+    console.log('[MIGRATE] Dropping video_likes table...')
     await pool.query('DROP TABLE IF EXISTS video_likes CASCADE;')
 
     logs.push('Creating video_likes table...')
+    console.log('[MIGRATE] Creating video_likes table...')
     await pool.query(`
       CREATE TABLE video_likes (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -23,12 +29,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       );
     `)
     logs.push('video_likes table created')
+    console.log('[MIGRATE] video_likes table created')
 
     // Drop and recreate video_comments table
     logs.push('Dropping video_comments table...')
+    console.log('[MIGRATE] Dropping video_comments table...')
     await pool.query('DROP TABLE IF EXISTS video_comments CASCADE;')
 
     logs.push('Creating video_comments table...')
+    console.log('[MIGRATE] Creating video_comments table...')
     await pool.query(`
       CREATE TABLE video_comments (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -39,12 +48,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       );
     `)
     logs.push('video_comments table created')
+    console.log('[MIGRATE] video_comments table created')
 
     // Drop and recreate video_shares table
     logs.push('Dropping video_shares table...')
+    console.log('[MIGRATE] Dropping video_shares table...')
     await pool.query('DROP TABLE IF EXISTS video_shares CASCADE;')
 
     logs.push('Creating video_shares table...')
+    console.log('[MIGRATE] Creating video_shares table...')
     await pool.query(`
       CREATE TABLE video_shares (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -55,9 +67,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       );
     `)
     logs.push('video_shares table created')
+    console.log('[MIGRATE] video_shares table created')
 
     // Create indexes
     logs.push('Creating indexes...')
+    console.log('[MIGRATE] Creating indexes...')
     await pool.query('CREATE INDEX IF NOT EXISTS idx_video_likes_video ON video_likes(video_id);')
     await pool.query('CREATE INDEX IF NOT EXISTS idx_video_likes_user ON video_likes(user_id);')
     await pool.query('CREATE INDEX IF NOT EXISTS idx_video_comments_video ON video_comments(video_id);')
@@ -65,8 +79,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     await pool.query('CREATE INDEX IF NOT EXISTS idx_video_shares_video ON video_shares(video_id);')
     await pool.query('CREATE INDEX IF NOT EXISTS idx_video_shares_user ON video_shares(user_id);')
     logs.push('Indexes created')
+    console.log('[MIGRATE] Indexes created')
 
     logs.push('Migration completed successfully!')
+
+    console.log('[MIGRATE] Migration completed successfully!')
 
     res.json({
       success: true,
@@ -84,3 +101,5 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     })
   }
 }
+
+export default compose(cors, errorHandler)(handler)
