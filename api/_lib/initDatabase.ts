@@ -12,10 +12,11 @@ let isInitialized = false
  * Uses CREATE TABLE IF NOT EXISTS so it's safe to run multiple times.
  */
 export async function initDatabase(): Promise<void> {
+  // Temporarily force initialization to run every time to ensure new tables are created
   // Skip if already initialized in this instance (warm start)
-  if (isInitialized) {
-    return
-  }
+  // if (isInitialized) {
+  //   return
+  // }
 
   const pool = getPgPool()
 
@@ -363,7 +364,8 @@ export async function initDatabase(): Promise<void> {
     await pool.query('CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at DESC);')
 
     // Mark as initialized
-    isInitialized = true
+    // Temporarily commented out to force re-initialization
+    // isInitialized = true
   } catch (error) {
     console.error('Database initialization failed:', error)
     throw error
