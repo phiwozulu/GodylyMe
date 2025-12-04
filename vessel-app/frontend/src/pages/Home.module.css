@@ -200,6 +200,8 @@
 .inlineResults {
   margin-top: 20px; /* move results closer to the search field (~20px) */
   max-width: 360px;
+  max-height: 60vh; /* Limit height to 60% of viewport */
+  overflow-y: auto; /* Enable vertical scrolling */
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.35);
   background: rgba(0, 0, 0, 0.6);
@@ -207,6 +209,30 @@
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
+  /* Smooth scrolling */
+  scroll-behavior: smooth;
+  /* Custom scrollbar styling */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
+}
+
+/* Webkit scrollbar styling for Chrome/Safari */
+.inlineResults::-webkit-scrollbar {
+  width: 8px;
+}
+
+.inlineResults::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.inlineResults::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+}
+
+.inlineResults::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
 }
 
 .contentRow {
