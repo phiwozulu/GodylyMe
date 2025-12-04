@@ -14,16 +14,26 @@ function getJwtSecret(): string {
 }
 
 async function handler(req: VercelRequest, res: VercelResponse) {
-  await initDatabase()
+  console.log('[COMMENT] Starting comment handler for video:', req.query.id, 'method:', req.method)
+
+  try {
+    await initDatabase()
+    console.log('[COMMENT] Database initialized')
+  } catch (dbError) {
+    console.error('[COMMENT] Database initialization failed:', dbError)
+    return res.status(500).json({ message: 'Database initialization failed', error: String(dbError) })
+  }
 
   const { id } = req.query
   const pool = getPgPool()
 
   if (!id || typeof id !== 'string') {
+    console.error('[COMMENT] Invalid video ID')
     return res.status(400).json({ message: 'Video ID parameter is required' })
   }
 
   if (req.method === 'POST') {
+    console.log('[COMMENT] POST request - posting new comment')
     // POST requires authentication
     const authHeader = req.headers.authorization
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
