@@ -89,7 +89,6 @@ export default function Friends() {
       if (!mounted) return
       try {
         if (!contentService.isAuthenticated()) return
-<<<<<<< Updated upstream
         const [followingProfiles, followerProfiles, followingFeed] = await Promise.all([
           contentService.fetchFollowingProfiles(),
           contentService.fetchFollowerProfiles(),
@@ -100,10 +99,6 @@ export default function Friends() {
           setMutualAccounts(buildMutualAccountSet(followingProfiles ?? [], followerProfiles ?? []))
           setMutualHandles(buildMutualHandleSet(followingProfiles ?? [], followerProfiles ?? []))
 
-=======
-        const followingFeed = await contentService.fetchFollowingFeed()
-        if (mounted && followingFeed.length) {
->>>>>>> Stashed changes
           setClips((current) => {
             // Only add new videos that aren't already in the feed
             const existingIds = new Set(current.map(v => v.id))
@@ -122,16 +117,12 @@ export default function Friends() {
     }
 
     load()
-<<<<<<< Updated upstream
     const unsubscribe = contentService.subscribe(() => {
       // Trigger immediate re-render for bookmark/like changes
       setUpdateTrigger(prev => prev + 1)
       // Also reload feed data
       load()
     })
-=======
-    const unsubscribe = contentService.subscribe(load)
->>>>>>> Stashed changes
 
     // Poll for new content every 30 seconds
     pollInterval = setInterval(pollForNewContent, 30000)
