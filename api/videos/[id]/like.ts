@@ -37,7 +37,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const pool = getPgPool()
 
   try {
-    // Just try the operation - let it fail if table is wrong
+    // Check if table exists and has correct schema
+    const schemaCheck = await pool.query(`
+      SELECT column_name, data_type
+      FROM information_schema.columns
+      WHERE table_name = 'video_likes' AND column_name = 'video_id'
+    `)
+
+    // If video_id is UUID (wrong), drop and recreate
+    if (schemaCheck.rows.length > 0 && schemaCheck.rows[0].data_type === 'uuid') {
+      console.log('[LIKE] Wrong schema detected, recreating table...')
+      await pool.query('DROP TABLE IF EXISTS video_likes CASCADE')
+    }
+
+    // Create table with correct schema
     await pool.query(`
       CREATE TABLE IF NOT EXISTS video_likes (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
