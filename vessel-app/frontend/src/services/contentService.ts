@@ -637,8 +637,8 @@ async function getJson<T>(path: string, includeAuth = false): Promise<T> {
   return requestJson<T>(path, { method: 'GET' }, includeAuth)
 }
 
-async function deleteJson(path: string, includeAuth = false): Promise<void> {
-  await requestJson(path, { method: 'DELETE' }, includeAuth)
+async function deleteJson<T = void>(path: string, includeAuth = false): Promise<T> {
+  return requestJson<T>(path, { method: 'DELETE' }, includeAuth)
 }
 
 function applyApiUserSession(user: ApiUser, token?: string | null): ActiveProfile {
@@ -2056,23 +2056,12 @@ export const contentService = {
     let nextCount = clip.likes
 
     if (alreadyLiked) {
-      try {
-        const payload = await deleteJson(`/api/videos/${encodeURIComponent(clipId)}/like`, true).catch(() => null)
-        if (payload && typeof (payload as any).count === 'number') {
-          nextCount = (payload as any).count
-        } else {
-          nextCount = Math.max(0, clip.likes - 1)
-        }
-      } finally {
-        removeLikeForUser(likerId, clipId)
-      }
+      const payload = await deleteJson<{ count: number }>(`/api/videos/${encodeURIComponent(clipId)}/like`, true)
+      nextCount = payload.count ?? Math.max(0, clip.likes - 1)
+      removeLikeForUser(likerId, clipId)
     } else {
-      const payload = await postJson<{ count?: number }>(`/api/videos/${encodeURIComponent(clipId)}/like`, {}, true)
-      if (payload && typeof payload.count === 'number') {
-        nextCount = payload.count
-      } else {
-        nextCount = clip.likes + 1
-      }
+      const payload = await postJson<{ count: number }>(`/api/videos/${encodeURIComponent(clipId)}/like`, {}, true)
+      nextCount = payload.count ?? (clip.likes + 1)
       addLikeForUser(likerId, clipId)
     }
 
