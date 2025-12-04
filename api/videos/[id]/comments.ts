@@ -32,21 +32,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const pool = getPgPool()
 
-  // Ensure video_comments table exists
+  // Ensure video_comments table has correct schema
   try {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS video_comments (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        video_id TEXT NOT NULL,
-        user_id UUID NOT NULL,
-        body TEXT NOT NULL,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      )
+    const schemaCheck = await pool.query(`
+      SELECT data_type FROM information_schema.columns
+      WHERE table_name = 'video_comments' AND column_name = 'video_id'
     `)
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_video_comments_video ON video_comments(video_id)')
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_video_comments_user ON video_comments(user_id)')
+
+    if (schemaCheck.rows.length === 0 || schemaCheck.rows[0].data_type === 'uuid') {
+      console.log('[COMMENT] Recreating video_comments table with correct schema')
+      await pool.query('DROP TABLE IF EXISTS video_comments CASCADE')
+      await pool.query(`
+        CREATE TABLE video_comments (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          video_id TEXT NOT NULL,
+          user_id UUID NOT NULL,
+          body TEXT NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+      `)
+      await pool.query('CREATE INDEX idx_video_comments_video ON video_comments(video_id)')
+      await pool.query('CREATE INDEX idx_video_comments_user ON video_comments(user_id)')
+    }
   } catch (error) {
-    console.error('[COMMENT] Error creating table:', error)
+    console.error('[COMMENT] Error fixing table schema:', error)
   }
 
   if (req.method === 'GET') {

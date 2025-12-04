@@ -50,18 +50,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const pool = getPgPool()
 
   try {
-    // Ensure video_likes table exists
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS video_likes (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        video_id TEXT NOT NULL,
-        user_id UUID NOT NULL,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        UNIQUE(video_id, user_id)
-      )
+    // Check if table has correct schema, recreate if not
+    const schemaCheck = await pool.query(`
+      SELECT data_type FROM information_schema.columns
+      WHERE table_name = 'video_likes' AND column_name = 'video_id'
     `)
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_video_likes_video ON video_likes(video_id)')
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_video_likes_user ON video_likes(user_id)')
+
+    if (schemaCheck.rows.length === 0 || schemaCheck.rows[0].data_type === 'uuid') {
+      // Table doesn't exist or has wrong schema - recreate it
+      console.log('[LIKE] Recreating video_likes table with correct schema')
+      await pool.query('DROP TABLE IF EXISTS video_likes CASCADE')
+      await pool.query(`
+        CREATE TABLE video_likes (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          video_id TEXT NOT NULL,
+          user_id UUID NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          UNIQUE(video_id, user_id)
+        )
+      `)
+      await pool.query('CREATE INDEX idx_video_likes_video ON video_likes(video_id)')
+      await pool.query('CREATE INDEX idx_video_likes_user ON video_likes(user_id)')
+    }
 
     // Verify video exists
     const videoCheck = await pool.query('SELECT id, user_id FROM videos WHERE id = $1', [videoId])
