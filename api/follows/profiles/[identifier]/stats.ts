@@ -14,10 +14,13 @@ async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    // Normalize handle/ID (strip @, lower-case) so we can match by handle or UUID
+    const normalizedIdentifier = identifier.trim().replace(/^@/, '').toLowerCase()
+
     // Find user by handle or ID
     const userResult = await pool.query(
       'SELECT id FROM users WHERE handle = $1 OR id = $1',
-      [identifier.toLowerCase()]
+      [normalizedIdentifier]
     )
 
     if (userResult.rows.length === 0) {
@@ -28,7 +31,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Get follower count
     const followersResult = await pool.query(
-      'SELECT COUNT(*) as count FROM user_follows WHERE following_id = $1',
+      'SELECT COUNT(*) as count FROM user_follows WHERE followee_id = $1',
       [userId]
     )
 
