@@ -107,7 +107,7 @@ async function handleUpload(req: VercelRequest, res: VercelResponse) {
         file.on('end', () => {
           const buffer = Buffer.concat(fileChunks)
 
-          if (fieldname === 'video') {
+          if (fieldname === 'video' || fieldname === 'file') {
             videoFile = { buffer, filename: info.filename, mimetype: info.mimeType }
           } else if (fieldname === 'thumbnail') {
             thumbnailFile = { buffer, filename: info.filename, mimetype: info.mimeType }

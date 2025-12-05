@@ -29,19 +29,24 @@ async function handler(req: VercelRequest, res: VercelResponse) {
 
     const userId = userResult.rows[0].id
 
-    // Get follower count (support either column name for compatibility)
-    const followersResult = await pool.query(
+    // Determine the correct "followed user" column (was renamed from followee_id -> following_id)
+    const columnCheck = await pool.query(
       `
-        SELECT COUNT(*) as count
-        FROM user_follows
-        WHERE following_id = $1 OR followee_id = $1
-      `,
+        SELECT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'user_follows' AND column_name = 'following_id'
+        ) AS has_following
+      `
+    )
+    const followedColumn = columnCheck.rows[0]?.has_following ? 'following_id' : 'followee_id'
+
+    const followersResult = await pool.query(
+      `SELECT COUNT(*) AS count FROM user_follows WHERE ${followedColumn} = $1`,
       [userId]
     )
 
-    // Get following count
     const followingResult = await pool.query(
-      'SELECT COUNT(*) as count FROM user_follows WHERE follower_id = $1',
+      `SELECT COUNT(*) AS count FROM user_follows WHERE follower_id = $1`,
       [userId]
     )
 

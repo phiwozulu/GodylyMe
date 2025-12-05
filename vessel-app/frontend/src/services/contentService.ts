@@ -1882,7 +1882,8 @@ export const contentService = {
       if (input.description) formData.append('description', input.description)
       if (input.category) formData.append('category', input.category)
       if (input.tags && input.tags.length > 0) formData.append('tags', JSON.stringify(input.tags))
-      // Backend expects the uploaded binary on the "file" field name
+      // Backend (Vercel) accepts "video"; legacy local dev accepted "file" – send both for compatibility.
+      formData.append('video', input.file)
       formData.append('file', input.file)
 
       // Generate thumbnail from video
