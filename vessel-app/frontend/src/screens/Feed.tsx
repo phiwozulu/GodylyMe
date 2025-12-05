@@ -99,7 +99,7 @@ export default function Feed() {
     }
     const timer = window.setTimeout(() => {
       void performSearch(trimmed)
-    }, 220)
+    }, 100)
     return () => window.clearTimeout(timer)
   }, [searchQuery, searchOpen])
 
