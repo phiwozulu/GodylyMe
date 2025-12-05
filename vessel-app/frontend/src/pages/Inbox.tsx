@@ -369,17 +369,24 @@ export default function Inbox() {
     [navigate]
   )
 
-  const dismissNotification = React.useCallback((id: string) => {
+  const dismissNotification = React.useCallback(async (id: string) => {
+    // Optimistically update UI
     setNotifications((current) => current.filter((item) => item.id !== id))
-    // Persist dismissed notification
+
+    // Persist to server
     try {
+      await contentService.dismissNotification(id)
+      // Also persist to localStorage as backup
       const dismissed = JSON.parse(localStorage.getItem('dismissedNotifications') || '[]') as string[]
       if (!dismissed.includes(id)) {
         dismissed.push(id)
         localStorage.setItem('dismissedNotifications', JSON.stringify(dismissed))
       }
     } catch (err) {
-      console.error('Failed to persist dismissed notification', err)
+      console.error('Failed to dismiss notification on server', err)
+      // Revert optimistic update on error
+      const notifications = await contentService.fetchNotifications()
+      setNotifications(notifications)
     }
   }, [])
 

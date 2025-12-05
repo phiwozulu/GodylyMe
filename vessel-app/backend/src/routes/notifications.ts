@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { requireAuth } from '../utils/authMiddleware'
-import { listNotifications } from '../services/notificationService'
+import { listNotifications, dismissNotification } from '../services/notificationService'
 import { presentUser } from '../services/userService'
 
 const router = Router()
@@ -19,6 +19,16 @@ router.get('/', requireAuth, async (req, res, next) => {
         actor: presentUser(notification.actor),
       })),
     })
+  } catch (error) {
+    next(error)
+  }
+})
+
+router.delete('/:id', requireAuth, async (req, res, next) => {
+  try {
+    const notificationId = req.params.id
+    await dismissNotification(notificationId, req.authUser!.id)
+    res.json({ success: true })
   } catch (error) {
     next(error)
   }

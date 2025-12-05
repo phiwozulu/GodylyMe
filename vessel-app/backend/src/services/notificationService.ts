@@ -105,3 +105,10 @@ export async function listNotifications(recipientId: string, limit = 50): Promis
     actor: mapRow(row.actor_json),
   }))
 }
+
+export async function dismissNotification(notificationId: string, userId: string): Promise<void> {
+  await pool.query(
+    'DELETE FROM notifications WHERE id = $1 AND recipient_id = $2',
+    [notificationId, userId]
+  )
+}

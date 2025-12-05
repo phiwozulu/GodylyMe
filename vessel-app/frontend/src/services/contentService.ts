@@ -1845,6 +1845,12 @@ export const contentService = {
     const payload = await getJson<{ notifications: ApiNotificationSummary[] }>('/api/notifications', true)
     return payload.notifications.map(mapApiNotification)
   },
+  async dismissNotification(notificationId: string): Promise<void> {
+    if (!hasAuthSession()) {
+      throw new Error('Sign in to dismiss notifications.')
+    }
+    await deleteJson(`/api/notifications/${encodeURIComponent(notificationId)}`, true)
+  },
   async fetchFollowStats(profileId: string): Promise<FollowStats> {
     const trimmed = profileId.trim()
     if (!trimmed) {
