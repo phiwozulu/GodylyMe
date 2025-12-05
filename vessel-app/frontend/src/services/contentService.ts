@@ -1885,21 +1885,8 @@ export const contentService = {
 
     // If file is provided, upload to Vercel Blob directly (avoids 4.5MB function limit)
     if (input.file) {
-<<<<<<< Updated upstream
-      const formData = new FormData()
-      formData.append('title', input.title.trim())
-      if (input.description) formData.append('description', input.description)
-      if (input.category) formData.append('category', input.category)
-      if (input.tags && input.tags.length > 0) formData.append('tags', JSON.stringify(input.tags))
-      // Backend (Vercel) accepts "video"; legacy local dev accepted "file" – send both for compatibility.
-      formData.append('video', input.file)
-      formData.append('file', input.file)
-
-      // Generate thumbnail from video
-=======
       const file = input.file
       const safeName = safeBlobName(file.name)
->>>>>>> Stashed changes
       try {
         // Request a client upload token (enforces max size server-side)
         const tokenResponse = await postJson<{
