@@ -39,7 +39,6 @@ export default function Inbox() {
   const [suggestionsError, setSuggestionsError] = React.useState<string | null>(null)
   const [followBusyId, setFollowBusyId] = React.useState<string | null>(null)
   const [authMode, setAuthMode] = React.useState<AuthMode | null>(null)
-  const [threadsRefreshKey, setThreadsRefreshKey] = React.useState(0)
   const [notifications, setNotifications] = React.useState<NotificationSummary[]>([])
   const [notificationsLoading, setNotificationsLoading] = React.useState(false)
   const [notificationsError, setNotificationsError] = React.useState<string | null>(null)
@@ -76,7 +75,7 @@ export default function Inbox() {
       setActiveProfile(contentService.getActiveProfile())
     })
     return unsubscribe
-  }, [threadsRefreshKey])
+  }, [])
 
   React.useEffect(() => {
     let cancelled = false
@@ -271,7 +270,7 @@ export default function Inbox() {
     return () => {
       cancelled = true
     }
-  }, [threadsRefreshKey, activeProfile.id, selfHandle])
+  }, [activeProfile.id, selfHandle])
 
   React.useEffect(() => {
     if (!isAuthenticated || tab !== 'messages') {
@@ -549,7 +548,6 @@ export default function Inbox() {
 
   const handleAuthComplete = React.useCallback(() => {
     setAuthMode(null)
-    setThreadsRefreshKey((value) => value + 1)
   }, [])
 
 

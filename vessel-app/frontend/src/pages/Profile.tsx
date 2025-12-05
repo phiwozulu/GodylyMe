@@ -108,20 +108,15 @@ export default function Profile() {
     ? { label: "Open profile settings", icon: "\u2699", onClick: () => openSettings() }
     : { label: "Copy profile link", icon: <SvgShare width={22} height={22} />, onClick: copyProfileLink }
 
-  React.useEffect(() => { 
+  React.useEffect(() => {
     if (!targetId) return
-    const refresh = () => {
-      setClips(contentService.getClipsByAuthor(targetId))
-      setLikedClips(contentService.getLikedFeedFor(targetId))
-      if (isSelf) {
-        setSavedClips(contentService.getSavedClips())
-      } else {
-        setSavedClips([])
-      }
+    setClips(contentService.getClipsByAuthor(targetId))
+    setLikedClips(contentService.getLikedFeedFor(targetId))
+    if (isSelf) {
+      setSavedClips(contentService.getSavedClips())
+    } else {
+      setSavedClips([])
     }
-    refresh()
-    const unsubscribe = contentService.subscribe(refresh)
-    return unsubscribe
   }, [targetId, isSelf])
 
   React.useEffect(() => {
