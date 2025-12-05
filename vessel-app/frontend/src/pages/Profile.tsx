@@ -674,6 +674,14 @@ function Stat({
 function Overlay({ title, entries, onSelect, onClose, isFollowingList, isFollowersList, onUnfollow, onRemoveFollower }: OverlayProps) {
   const [busyIds, setBusyIds] = React.useState<Set<string>>(new Set())
 
+  // Prevent background scrolling when overlay is open
+  React.useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [])
+
   const handleAction = async (userId: string, handle: string, action: 'unfollow' | 'remove') => {
     setBusyIds(prev => new Set(prev).add(userId))
     try {
