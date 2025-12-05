@@ -8,6 +8,7 @@ import {
   type ContentCollection,
 } from './mockData'
 import { aiModerator } from './aiModerator'
+import { put as uploadBlobClient } from '@vercel/blob/client'
 
 type Listener = () => void
 
@@ -27,6 +28,8 @@ const DEFAULT_VIDEO_PLACEHOLDER = 'https://interactive-examples.mdn.mozilla.net/
 const DEFAULT_THUMB_PLACEHOLDER = 'https://placehold.co/640x360?text=Vessel'
 export const THUMBNAIL_PLACEHOLDER = DEFAULT_THUMB_PLACEHOLDER
 export const VIDEO_PLACEHOLDER = DEFAULT_VIDEO_PLACEHOLDER
+const BLOB_UPLOAD_PATH_ROOT = 'videos'
+const BLOB_THUMB_PATH_ROOT = 'thumbnails'
 const NETWORK_DELAY_MIN = 220
 const NETWORK_DELAY_MAX = 520
 const NETWORK_FAILURE_RATE = 0.05
@@ -49,6 +52,11 @@ const normalizedSeedVideos: Video[] = seedVideos.map((clip) => ({
 
 function normalizeHandleMatch(value?: string | null): string {
   return (value || '').trim().replace(/^@/, '').toLowerCase()
+}
+
+function safeBlobName(name?: string | null): string {
+  const base = (name || 'upload').replace(/[^\w.-]+/g, '_')
+  return base || 'upload'
 }
 
 async function searchLocal(query: string, limit = 20) {
@@ -1875,8 +1883,9 @@ export const contentService = {
       { label: 'Description', text: input.description ?? '' },
     ])
 
-    // If file is provided, upload via FormData
+    // If file is provided, upload to Vercel Blob directly (avoids 4.5MB function limit)
     if (input.file) {
+<<<<<<< Updated upstream
       const formData = new FormData()
       formData.append('title', input.title.trim())
       if (input.description) formData.append('description', input.description)
@@ -1887,26 +1896,95 @@ export const contentService = {
       formData.append('file', input.file)
 
       // Generate thumbnail from video
+=======
+      const file = input.file
+      const safeName = safeBlobName(file.name)
+>>>>>>> Stashed changes
       try {
-        const thumbnailBlob = await generateVideoThumbnail(input.file)
-        if (thumbnailBlob) {
-          formData.append('thumbnail', thumbnailBlob, 'thumbnail.jpg')
-        }
-      } catch (err) {
-        console.warn('Failed to generate thumbnail, continuing without it:', err)
-      }
+        // Request a client upload token (enforces max size server-side)
+        const tokenResponse = await postJson<{
+          token: string
+          maximumSizeInBytes: number
+          allowedContentTypes: string[]
+        }>(
+          '/api/blob/upload-token',
+          {
+            filename: safeName,
+            size: file.size,
+            contentType: file.type,
+          },
+          true
+        )
 
-      const payload = await requestJson<{ video: ApiFeedVideo }>(
-        '/api/feed/videos',
-        {
-          method: 'POST',
-          body: formData,
-        },
-        true
-      )
-      const clip = mapApiVideo(payload.video)
-      mergeRemoteFeed([clip])
-      return clip
+        const uploadPath = `${BLOB_UPLOAD_PATH_ROOT}/${getActiveProfile().id || 'user'}/${Date.now()}-${safeName}`
+        const videoResult = await uploadBlobClient(uploadPath, file, {
+          access: 'public',
+          token: tokenResponse.token,
+          contentType: file.type || 'video/mp4',
+        })
+
+        let thumbnailUrl: string | null = null
+        try {
+          const thumbnailBlob = await generateVideoThumbnail(file)
+          if (thumbnailBlob) {
+            const thumbPath = `${BLOB_THUMB_PATH_ROOT}/${getActiveProfile().id || 'user'}/${Date.now()}-${safeName}.jpg`
+            const thumbResult = await uploadBlobClient(thumbPath, thumbnailBlob, {
+              access: 'public',
+              token: tokenResponse.token,
+              contentType: 'image/jpeg',
+            })
+            thumbnailUrl = thumbResult.url
+          }
+        } catch (err) {
+          console.warn('Failed to generate/upload thumbnail, continuing without it:', err)
+        }
+
+        const payload = await postJson<{ video: ApiFeedVideo }>(
+          '/api/feed/videos',
+          {
+            title: input.title.trim(),
+            description: input.description || undefined,
+            category: input.category || undefined,
+            tags: input.tags || undefined,
+            videoUrl: videoResult.url,
+            thumbnailUrl: thumbnailUrl || DEFAULT_THUMB_PLACEHOLDER,
+          },
+          true
+        )
+        const clip = mapApiVideo(payload.video)
+        mergeRemoteFeed([clip])
+        return clip
+      } catch (error) {
+        console.warn('Blob upload failed, falling back to form upload:', error)
+        // Fall back to the legacy form-data upload (useful in local dev)
+        const formData = new FormData()
+        formData.append('title', input.title.trim())
+        if (input.description) formData.append('description', input.description)
+        if (input.category) formData.append('category', input.category)
+        if (input.tags && input.tags.length > 0) formData.append('tags', JSON.stringify(input.tags))
+        formData.append('file', file)
+
+        try {
+          const thumbnailBlob = await generateVideoThumbnail(file)
+          if (thumbnailBlob) {
+            formData.append('thumbnail', thumbnailBlob, 'thumbnail.jpg')
+          }
+        } catch (err) {
+          console.warn('Failed to generate thumbnail during fallback upload:', err)
+        }
+
+        const payload = await requestJson<{ video: ApiFeedVideo }>(
+          '/api/feed/videos',
+          {
+            method: 'POST',
+            body: formData,
+          },
+          true
+        )
+        const clip = mapApiVideo(payload.video)
+        mergeRemoteFeed([clip])
+        return clip
+      }
     }
 
     // Otherwise send as JSON with placeholder URLs
