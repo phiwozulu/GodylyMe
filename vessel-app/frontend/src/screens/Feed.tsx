@@ -77,6 +77,18 @@ export default function Feed() {
 
   const [showResults, setShowResults] = React.useState(false)
 
+  // Prevent background scrolling when search results are open
+  React.useEffect(() => {
+    if (showResults) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [showResults])
+
   const activeTab = tabs.find((item) => item.id === tab) ?? tabs[0]
   const isFriends = tab === 'friends'
   const isPrayer = tab === 'prayer'
