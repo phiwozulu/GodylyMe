@@ -277,7 +277,8 @@
   width: 100%;
   display: flex;
   justify-content: center;
-  pointer-events: auto; /* keep search bar clickable even though the chrome container blocks pointer events */
+  pointer-events: auto;
+  position: relative;
 }
 
 .searchField {
@@ -303,31 +304,29 @@
 }
 
 .searchOverlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(10, 12, 16, 0.45);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  width: 100%;
   display: flex;
   justify-content: center;
-  align-items: center;
-  padding: clamp(0.8rem, 3vw, 1.6rem);
-  z-index: 50;
-  overflow-y: auto;
+  margin-top: 8px;
+  z-index: 10;
 }
 
 .searchResultsPanel {
   pointer-events: auto;
   margin: 0 auto;
   width: 100%;
-  max-width: clamp(420px, 78vw, 540px);
-  max-height: 90vh;
-  background: rgba(255, 255, 255, 0.95);
+  max-width: clamp(420px, 90vw, 540px);
+  max-height: calc(100vh - 280px);
+  background: rgba(255, 255, 255, 0.98);
   color: #0b0b0b;
   border-radius: 14px;
   padding: 0.9rem;
-  box-shadow: 0 18px 36px rgba(12, 14, 18, 0.08);
-  border: 1px solid rgba(16, 18, 22, 0.06);
+  box-shadow: 0 8px 24px rgba(12, 14, 18, 0.15);
+  border: 1px solid rgba(16, 18, 22, 0.08);
   display: flex;
   flex-direction: column;
   gap: 0.6rem;

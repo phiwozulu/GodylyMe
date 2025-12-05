@@ -77,18 +77,6 @@ export default function Feed() {
 
   const [showResults, setShowResults] = React.useState(false)
 
-  // Prevent background scrolling when search results are open
-  React.useEffect(() => {
-    if (showResults) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
-    return () => {
-      document.body.style.overflow = ''
-    }
-  }, [showResults])
-
   const activeTab = tabs.find((item) => item.id === tab) ?? tabs[0]
   const isFriends = tab === 'friends'
   const isPrayer = tab === 'prayer'
@@ -189,8 +177,8 @@ export default function Feed() {
 
         {/* render the interactive results panel near the search field */}
         {showResults && searchResults ? (
-          <div className={styles.searchOverlay} onClick={() => { setShowResults(false); }}>
-            <div className={styles.searchResultsPanel} onClick={(e) => e.stopPropagation()}>
+          <div className={styles.searchOverlay}>
+            <div className={styles.searchResultsPanel}>
               {searchLoading ? <div className={styles.searchNoResults}>Searching...</div> : null}
               {searchResults.accounts && searchResults.accounts.length ? (
                 <div className={styles.searchSection}>
