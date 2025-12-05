@@ -432,8 +432,8 @@
 
 .bubbleThem {
   align-self: flex-start;
-  background: var(--inbox-pill);
-  color: #43351c;
+  background: #e9c46a;
+  color: #1e2415;
 }
 
 .bubbleMe {
