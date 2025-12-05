@@ -472,23 +472,20 @@
 
 .composer {
   display: flex;
+  flex-direction: row;
   gap: 0.5rem;
   align-items: center;
-  padding: 0.5rem;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 999px;
-  backdrop-filter: blur(10px);
 }
 
 .composer textarea {
   flex: 1;
   resize: none;
-  border-radius: 999px;
+  border-radius: 15px;
   border: none;
-  padding: 0.75rem 1.25rem;
+  padding: 0.75rem 1rem;
   font-family: inherit;
   font-size: 0.95rem;
-  background: rgba(255, 255, 255, 0.95);
+  background: #fff;
   color: #2a2012;
   box-shadow: none;
   min-height: 44px;
@@ -503,7 +500,7 @@
 
 .composer button {
   border: none;
-  border-radius: 50%;
+  border-radius: 15px;
   width: 44px;
   height: 44px;
   min-width: 44px;
@@ -512,8 +509,8 @@
   cursor: pointer;
   background: #e9c46a;
   color: #1e2415;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transition: transform 0.16s ease, box-shadow 0.16s ease, opacity 0.16s ease, background 0.16s ease;
+  box-shadow: none;
+  transition: transform 0.16s ease, opacity 0.16s ease, background 0.16s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -526,13 +523,10 @@
   opacity: 0.4;
   cursor: not-allowed;
   transform: none;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .composer button:not(:disabled):hover {
-  transform: scale(1.05);
   background: #f4d078;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
 .composer button:not(:disabled):active {
