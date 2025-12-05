@@ -47,6 +47,9 @@ export default function Watch() {
   const [showComments, setShowComments] = useState(false)
   const [isPlaying, setIsPlaying] = useState(true)
   const [muted, setMuted] = useState(true)
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+  const [replyingTo, setReplyingTo] = useState<VideoComment | null>(null)
+  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null)
 
   const likes = useMemo(() => {
     if (!clip) return '0'
@@ -152,6 +155,19 @@ export default function Watch() {
       cancelled = true
     }
   }, [clip?.id])
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      const target = event.target as HTMLElement
+      if (!target.closest(`.${styles.commentMenu}`)) {
+        setOpenMenuId(null)
+      }
+    }
+    if (openMenuId) {
+      document.addEventListener('click', handleClickOutside)
+      return () => document.removeEventListener('click', handleClickOutside)
+    }
+  }, [openMenuId])
 
   useEffect(() => {
     setMuted(true)
@@ -276,6 +292,7 @@ export default function Watch() {
       const comment = await contentService.recordComment(targetId, text.trim())
       setComments((prev) => [comment, ...prev])
       setText('')
+      setReplyingTo(null)
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'We could not post your encouragement. Please try again shortly.'
@@ -283,6 +300,38 @@ export default function Watch() {
     } finally {
       setCommentBusy(false)
     }
+  }
+
+  async function deleteComment(commentId: string) {
+    const targetId = clip?.id
+    if (!targetId || deletingCommentId) return
+    setDeletingCommentId(commentId)
+    try {
+      await contentService.deleteComment(targetId, commentId)
+      setComments((prev) => prev.filter((c) => c.id !== commentId))
+      setOpenMenuId(null)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to delete comment'
+      window.alert(message)
+    } finally {
+      setDeletingCommentId(null)
+    }
+  }
+
+  function startReply(comment: VideoComment) {
+    setReplyingTo(comment)
+    setText(`@${comment.user.handle || comment.user.name} `)
+    setOpenMenuId(null)
+  }
+
+  function canDeleteComment(comment: VideoComment): boolean {
+    const activeProfile = contentService.getActiveProfile()
+    if (!activeProfile.isVerified) return false
+    // User can delete if they're the comment author or video owner
+    return (
+      comment.user.accountId === activeProfile.accountId ||
+      clip?.user.accountId === activeProfile.accountId
+    )
   }
 
   async function toggleLike() {
@@ -510,15 +559,71 @@ export default function Watch() {
                       </span>
                     </div>
                     <p>{comment.body}</p>
+                    <div className={styles.commentActions}>
+                      <button
+                        type="button"
+                        className={styles.commentActionBtn}
+                        onClick={() => startReply(comment)}
+                      >
+                        Reply
+                      </button>
+                    </div>
+                  </div>
+                  <div className={styles.commentMenu}>
+                    <button
+                      type="button"
+                      className={styles.menuButton}
+                      onClick={() => setOpenMenuId(openMenuId === comment.id ? null : comment.id)}
+                      aria-label="Comment options"
+                    >
+                      ⋯
+                    </button>
+                    {openMenuId === comment.id && (
+                      <div className={styles.menuDropdown}>
+                        <button
+                          type="button"
+                          onClick={() => startReply(comment)}
+                          className={styles.menuItem}
+                        >
+                          Reply
+                        </button>
+                        {canDeleteComment(comment) && (
+                          <button
+                            type="button"
+                            onClick={() => deleteComment(comment.id)}
+                            className={`${styles.menuItem} ${styles.menuItemDanger}`}
+                            disabled={deletingCommentId === comment.id}
+                          >
+                            {deletingCommentId === comment.id ? 'Deleting...' : 'Delete'}
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
             <div className={styles.commentComposer}>
+              {replyingTo && (
+                <div className={styles.replyingTo}>
+                  <span>Replying to @{replyingTo.user.handle || replyingTo.user.name}</span>
+                  <button
+                    type="button"
+                    className={styles.cancelReply}
+                    onClick={() => {
+                      setReplyingTo(null)
+                      setText('')
+                    }}
+                    aria-label="Cancel reply"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
               <input
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                placeholder="Add a comment..."
+                placeholder={replyingTo ? "Write your reply..." : "Add a comment..."}
               />
               <button type="button" onClick={addComment} disabled={!text.trim() || commentBusy}>
                 {commentBusy ? 'Posting...' : 'Post'}

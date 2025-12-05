@@ -2003,6 +2003,20 @@ export const contentService = {
     notify()
     return mapApiComment(payload.comment)
   },
+  async deleteComment(clipId: string, commentId: string): Promise<void> {
+    requireVerifiedSession('delete comments')
+    const clip = getLibrary().find((item) => item.id === clipId)
+    if (!clip) {
+      throw new Error('Video not found.')
+    }
+    await deleteJson(
+      `/api/videos/${encodeURIComponent(clipId)}/comments/${encodeURIComponent(commentId)}`,
+      true
+    )
+    clip.comments = Math.max(0, (clip.comments ?? 1) - 1)
+    persistIfUpload(clipId)
+    notify()
+  },
   recordShare(clipId: string) {
     const clip = getLibrary().find((item) => item.id === clipId)
     if (!clip) return
