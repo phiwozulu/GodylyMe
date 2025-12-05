@@ -400,10 +400,22 @@
   overflow-y: auto;
   padding-right: 0.25rem;
   scrollbar-width: none;
+  scroll-behavior: smooth;
 }
 
 .messageList::-webkit-scrollbar {
   display: none;
+}
+
+@keyframes messageSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .bubble {
@@ -415,6 +427,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
+  animation: messageSlideIn 0.3s ease-out;
 }
 
 .bubbleThem {

@@ -59,6 +59,7 @@ export default function Inbox() {
   } | null>(null)
   const isAuthenticated = contentService.isAuthenticated()
   const threadRefs = React.useRef<Record<string, HTMLDivElement | null>>({})
+  const messageListRef = React.useRef<HTMLDivElement | null>(null)
 
   const openProfileFromSuggestion = React.useCallback(
     (handle: string) => {
@@ -319,6 +320,18 @@ export default function Inbox() {
       setExpandedThreadId(firstId)
     }
   }, [tab, threads, activeConversationId])
+
+  // Auto-scroll to bottom when messages change or conversation opens
+  React.useEffect(() => {
+    if (messageListRef.current && messages.length > 0) {
+      // Use requestAnimationFrame to ensure DOM has updated
+      requestAnimationFrame(() => {
+        if (messageListRef.current) {
+          messageListRef.current.scrollTop = messageListRef.current.scrollHeight
+        }
+      })
+    }
+  }, [messages, expandedThreadId])
 
   const activeThread = activeConversationId ? threads.find((thread) => thread.id === activeConversationId) ?? null : null
 
@@ -828,11 +841,11 @@ export default function Inbox() {
                         </div>
                       ) : null}
                       {messageError ? <div className={styles.contactError}>{messageError}</div> : null}
-                      <div className={styles.messageList}>
+                      <div className={styles.messageList} ref={messageListRef}>
                         {messagesBusy && !messages.length ? (
                           <div className={styles.status}>Loading conversation...</div>
                         ) : null}
-                        {messages.map((message) => {
+                        {messages.map((message, msgIndex) => {
                           const fromMe = isMessageFromCurrentUser(message, selfHandle)
                           const messageTimestamp = `${formatDateTime(message.createdAt)} • ${formatRelativeTime(
                             message.createdAt
