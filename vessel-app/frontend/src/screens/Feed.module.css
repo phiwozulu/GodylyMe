@@ -331,25 +331,13 @@
   flex-direction: column;
   gap: 0.6rem;
   overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
 }
 
 .searchResultsPanel::-webkit-scrollbar {
-  width: 6px;
-}
-
-.searchResultsPanel::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.searchResultsPanel::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 3px;
-}
-
-.searchResultsPanel::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.3);
+  display: none;
 }
 
 .searchSection {
