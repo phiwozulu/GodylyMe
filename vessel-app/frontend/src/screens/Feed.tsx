@@ -26,7 +26,6 @@ export default function Feed() {
   const location = useLocation()
   const initialTab: TabKey = location.pathname === '/friends' ? 'friends' : 'forYou'
   const [tab, setTab] = React.useState<TabKey>(initialTab)
-  const [refreshToken, setRefreshToken] = React.useState(0)
   const [searchOpen, setSearchOpen] = React.useState(false)
   const [searchQuery, setSearchQuery] = React.useState('')
   const [searchLoading, setSearchLoading] = React.useState(false)
@@ -82,11 +81,6 @@ export default function Feed() {
   const isFriends = tab === 'friends'
   const isPrayer = tab === 'prayer'
 
-  const handleLogoRefresh = React.useCallback(() => {
-    setTab('forYou')
-    setRefreshToken((token) => token + 1)
-  }, [])
-
   React.useEffect(() => {
     if (location.pathname === '/friends') {
       setTab('friends')
@@ -122,14 +116,9 @@ export default function Feed() {
         <div className={styles.topBar}>
           <div className={styles.tabHeader}>
             <div className={styles.leftTray}>
-              <button
-                type="button"
-                className={styles.brandGlyphButton}
-                aria-label="Refresh For You feed"
-                onClick={handleLogoRefresh}
-              >
+              <div className={styles.brandGlyphButton}>
                 <img src={Media.icons.logo} alt="Godlyme" className={styles.brandGlyph} />
-              </button>
+              </div>
               <div className={styles.tabRail}>
                 {tabs.map((item) => (
                   <button
@@ -313,7 +302,7 @@ export default function Feed() {
         ) : isFriends ? (
           <Friends />
         ) : (
-          <ForYou filter={activeTab.filter} refreshKey={refreshToken} />
+          <ForYou filter={activeTab.filter} />
         )}
       </div>
     </div>

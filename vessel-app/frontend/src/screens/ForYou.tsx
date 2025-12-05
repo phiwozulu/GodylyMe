@@ -9,7 +9,6 @@ import styles from "./ForYou.module.css"
 
 type Props = {
   filter?: (clip: Video) => boolean
-  refreshKey?: number
 }
 
 const offlineClip: Video = {
@@ -50,7 +49,7 @@ const normalizeProfileTarget = (video: Video): string => {
 
 const resolveUserId = (clip: Video): string => clip.user.handle || clip.user.id || normalizeProfileTarget(clip)
 
-export default function ForYou({ filter, refreshKey }: Props) {
+export default function ForYou({ filter }: Props) {
   const [clips, setClips] = React.useState<Video[]>([])
   const [loading, setLoading] = React.useState(true)
   const [index, setIndex] = React.useState(0)
@@ -64,7 +63,6 @@ export default function ForYou({ filter, refreshKey }: Props) {
 
   React.useEffect(() => {
     let mounted = true
-    let pollInterval: NodeJS.Timeout | null = null
 
     async function loadFeed() {
       const data = await contentService.fetchForYouFeed()
@@ -72,28 +70,6 @@ export default function ForYou({ filter, refreshKey }: Props) {
       if (mounted) {
         setClips(next)
         setLoading(false)
-      }
-    }
-
-    async function pollForNewContent() {
-      if (!mounted) return
-      try {
-        const data = await contentService.fetchForYouFeed()
-        if (mounted && data.length) {
-          setClips((current) => {
-            // Only add new videos that aren't already in the feed
-            const existingIds = new Set(current.map(v => v.id))
-            const newVideos = data.filter(v => !existingIds.has(v.id))
-            if (newVideos.length > 0) {
-              // Add new videos to the end of the feed
-              return [...current.filter(v => v.id !== 'offline-demo'), ...newVideos]
-            }
-            return current
-          })
-        }
-      } catch (err) {
-        // Silently fail on polling errors
-        console.debug('Poll failed:', err)
       }
     }
 
@@ -105,53 +81,14 @@ export default function ForYou({ filter, refreshKey }: Props) {
       loadFeed()
     })
 
-    // Poll for new content every 30 seconds
-    pollInterval = setInterval(pollForNewContent, 30000)
-
-    // Poll for new content every 30 seconds
-    pollInterval = setInterval(pollForNewContent, 30000)
-
-    // Poll for new content every 30 seconds
-    pollInterval = setInterval(pollForNewContent, 30000)
-
     return () => {
       mounted = false
-      if (pollInterval) clearInterval(pollInterval)
       unsubscribe()
       if (rafRef.current !== null) {
         cancelAnimationFrame(rafRef.current)
       }
     }
   }, [])
-
-  React.useEffect(() => {
-    if (typeof refreshKey === 'undefined') {
-      return
-    }
-    let cancelled = false
-    setLoading(true)
-    contentService
-      .fetchForYouFeed()
-      .then((data) => {
-        if (cancelled) return
-        const next = data.length ? data : [offlineClip]
-        setClips(next)
-        setLoading(false)
-        setIndex(0)
-        const node = trackRef.current
-        if (node) {
-          node.scrollTo({ top: 0, behavior: 'smooth' })
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setLoading(false)
-        }
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [refreshKey])
 
   const visibleClips = React.useMemo(() => {
     if (!filter) return clips

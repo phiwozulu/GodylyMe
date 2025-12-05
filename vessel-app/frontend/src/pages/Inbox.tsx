@@ -80,7 +80,6 @@ export default function Inbox() {
 
   React.useEffect(() => {
     let cancelled = false
-    let pollInterval: NodeJS.Timeout | null = null
 
     async function loadThreads() {
       setThreadsLoading(true)
@@ -102,27 +101,10 @@ export default function Inbox() {
       }
     }
 
-    async function pollForNewThreads() {
-      if (cancelled) return
-      try {
-        const data = await contentService.fetchMessageThreads()
-        if (!cancelled) {
-          setThreads(data)
-        }
-      } catch (error) {
-        // Silently fail on polling errors
-        console.debug('Thread poll failed:', error)
-      }
-    }
-
     void loadThreads()
-
-    // Poll for new threads every 30 seconds
-    pollInterval = setInterval(pollForNewThreads, 30000)
 
     return () => {
       cancelled = true
-      if (pollInterval) clearInterval(pollInterval)
     }
   }, [])
 
@@ -152,7 +134,6 @@ export default function Inbox() {
 
   React.useEffect(() => {
     let cancelled = false
-    let pollInterval: NodeJS.Timeout | null = null
 
     if (!isAuthenticated) {
       setNotifications([])
@@ -191,34 +172,10 @@ export default function Inbox() {
       }
     }
 
-    async function pollForNewNotifications() {
-      if (cancelled || !isAuthenticated) return
-      try {
-        const items = await contentService.fetchNotifications()
-        if (!cancelled) {
-          try {
-            const dismissed = JSON.parse(localStorage.getItem('dismissedNotifications') || '[]') as string[]
-            const filtered = items.filter((item) => !dismissed.includes(item.id))
-            setNotifications(filtered)
-          } catch (err) {
-            console.error('Failed to filter dismissed notifications', err)
-            setNotifications(items)
-          }
-        }
-      } catch (error) {
-        // Silently fail on polling errors
-        console.debug('Notification poll failed:', error)
-      }
-    }
-
     void loadNotifications()
-
-    // Poll for new notifications every 30 seconds
-    pollInterval = setInterval(pollForNewNotifications, 30000)
 
     return () => {
       cancelled = true
-      if (pollInterval) clearInterval(pollInterval)
     }
   }, [isAuthenticated, activeProfile.id])
 
@@ -228,7 +185,6 @@ export default function Inbox() {
       return
     }
     let cancelled = false
-    let pollInterval: NodeJS.Timeout | null = null
 
     async function loadMessages() {
       setMessagesBusy(true)
@@ -250,27 +206,10 @@ export default function Inbox() {
       }
     }
 
-    async function pollForNewMessages() {
-      if (cancelled || !activeConversationId) return
-      try {
-        const data = await contentService.fetchThreadMessages(activeConversationId)
-        if (!cancelled) {
-          setMessages(data)
-        }
-      } catch (error) {
-        // Silently fail on polling errors
-        console.debug('Message poll failed:', error)
-      }
-    }
-
     void loadMessages()
-
-    // Poll for new messages every 30 seconds
-    pollInterval = setInterval(pollForNewMessages, 30000)
 
     return () => {
       cancelled = true
-      if (pollInterval) clearInterval(pollInterval)
     }
   }, [activeConversationId])
 
