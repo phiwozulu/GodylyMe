@@ -4,11 +4,7 @@
   "installCommand": "cd vessel-app && npm install && cd api && npm install && cd ../frontend && npm install",
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
-    },
-    {
-      "source": "/(.*)",
+      "source": "/((?!api).*)",
       "destination": "/index.html"
     }
   ]
