@@ -339,9 +339,39 @@ export default function Inbox() {
     if (!expandedThreadId || !activeConversationId) return
     const target = threadRefs.current[expandedThreadId]
     if (!target) return
-    window.requestAnimationFrame(() => {
-      target.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' })
-    })
+
+    const scrollToThread = () => {
+      window.requestAnimationFrame(() => {
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' })
+        }
+      })
+    }
+
+    // Initial scroll
+    scrollToThread()
+
+    // Listen for viewport resize events (keyboard show/hide on mobile)
+    let resizeTimeout: ReturnType<typeof setTimeout>
+    const handleResize = () => {
+      // Debounce resize events
+      clearTimeout(resizeTimeout)
+      resizeTimeout = setTimeout(scrollToThread, 100)
+    }
+
+    window.addEventListener('resize', handleResize)
+    // Also listen for visualViewport changes (more reliable for keyboard on mobile)
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleResize)
+    }
+
+    return () => {
+      clearTimeout(resizeTimeout)
+      window.removeEventListener('resize', handleResize)
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleResize)
+      }
+    }
   }, [expandedThreadId, activeConversationId])
 
   React.useEffect(() => {

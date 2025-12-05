@@ -294,8 +294,9 @@ export default function Profile() {
 
   const fallbackFollowingCount = isSelf ? followingEntries.length : 0
   const fallbackFollowerCount = isSelf ? followersEntries.length : 0
-  const followingCount = followStats?.following ?? fallbackFollowingCount
-  const followerCount = followStats?.followers ?? fallbackFollowerCount
+  // For other users' profiles, rely on API stats only (don't default to 0)
+  const followingCount = isSelf ? (followStats?.following ?? fallbackFollowingCount) : (followStats?.following ?? 0)
+  const followerCount = isSelf ? (followStats?.followers ?? fallbackFollowerCount) : (followStats?.followers ?? 0)
   const canShowFollowLists = isSelf && isAuthenticated
 
   const handleFollowToggle = React.useCallback(async () => {
