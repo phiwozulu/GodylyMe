@@ -29,9 +29,13 @@ async function handler(req: VercelRequest, res: VercelResponse) {
 
     const userId = userResult.rows[0].id
 
-    // Get follower count
+    // Get follower count (support either column name for compatibility)
     const followersResult = await pool.query(
-      'SELECT COUNT(*) as count FROM user_follows WHERE followee_id = $1',
+      `
+        SELECT COUNT(*) as count
+        FROM user_follows
+        WHERE following_id = $1 OR followee_id = $1
+      `,
       [userId]
     )
 

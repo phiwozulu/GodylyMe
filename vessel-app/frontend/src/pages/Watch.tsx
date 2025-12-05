@@ -46,7 +46,12 @@ export default function Watch() {
   const [text, setText] = useState('')
   const [showComments, setShowComments] = useState(false)
   const [isPlaying, setIsPlaying] = useState(true)
-  const [muted, setMuted] = useState(true)
+  const MUTE_PREF_KEY = 'vessel_watch_muted_v1'
+  const [muted, setMuted] = useState(() => {
+    if (typeof window === 'undefined') return true
+    const stored = window.localStorage.getItem(MUTE_PREF_KEY)
+    return stored ? stored === 'true' : true
+  })
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [replyingTo, setReplyingTo] = useState<VideoComment | null>(null)
   const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null)
@@ -170,18 +175,21 @@ export default function Watch() {
   }, [openMenuId])
 
   useEffect(() => {
-    setMuted(true)
     const player = videoRef.current
     if (!player) return
+    player.muted = muted
+    player.volume = muted ? 0 : 1
+  }, [muted])
+
+  useEffect(() => {
+    const player = videoRef.current
+    if (!player) return
+    setIsPlaying(true)
     player
       .play()
-      .then(() => {
-        player.muted = true
-        player.volume = 0
-        setIsPlaying(!player.paused)
-      })
+      .then(() => setIsPlaying(!player.paused))
       .catch(() => setIsPlaying(!player.paused))
-  }, [clip])
+  }, [clip?.id])
 
   useEffect(() => {
     const player = videoRef.current
@@ -208,6 +216,7 @@ export default function Watch() {
       setCommentsError(null)
       setShowComments(false)
       setText('')
+      setIsPlaying(true)
       navigate(`/watch/${nextClip.id}`, { replace: true, state: { context: watchContext } })
     },
     [navigate, queue, watchContext]
@@ -414,7 +423,15 @@ export default function Watch() {
       icon: muted ? <SvgMute width={22} height={22} /> : <SvgVolume width={22} height={22} />,
       count: muted ? 'Off' : 'On',
       label: 'Sound',
-      onClick: () => setMuted((value) => !value),
+      onClick: () => {
+        setMuted((value) => {
+          const next = !value
+          if (typeof window !== 'undefined') {
+            window.localStorage.setItem(MUTE_PREF_KEY, next ? 'true' : 'false')
+          }
+          return next
+        })
+      },
       active: !muted,
       ariaPressed: !muted,
     },
