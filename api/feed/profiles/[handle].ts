@@ -55,7 +55,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
       description: row.description,
       videoUrl: row.video_url,
       thumbnailUrl: row.thumbnail_url,
-      duration: row.duration_seconds,
+      durationSeconds: row.duration_seconds,
       createdAt: row.created_at,
       user: {
         id: row.user_id,
@@ -63,9 +63,11 @@ async function handler(req: VercelRequest, res: VercelResponse) {
         name: row.name,
         photoUrl: row.photo_url,
       },
-      likes: parseInt(row.likes_count) || 0,
-      comments: parseInt(row.comments_count) || 0,
-      shares: parseInt(row.shares_count) || 0,
+      stats: {
+        likes: parseInt(row.likes_count) || 0,
+        comments: parseInt(row.comments_count) || 0,
+        shares: parseInt(row.shares_count) || 0,
+      },
       isLiked: false,
     }))
 
