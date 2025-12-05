@@ -1,4 +1,4 @@
-import { Router, type Request } from 'express'
+import { Router, type Request, type Express } from 'express'
 import multer from 'multer'
 import path from 'node:path'
 import fs from 'node:fs'
@@ -107,7 +107,14 @@ router.get('/profiles/:profileId', async (req, res, next) => {
   }
 })
 
-router.post('/videos', requireAuth, upload.single('file'), async (req, res, next) => {
+router.post(
+  '/videos',
+  requireAuth,
+  upload.fields([
+    { name: 'file', maxCount: 1 },
+    { name: 'video', maxCount: 1 },
+  ]),
+  async (req, res, next) => {
   try {
     const payload = uploadSchema.parse(req.body)
     const tags = parseTags(payload.tags)
@@ -119,8 +126,9 @@ router.post('/videos', requireAuth, upload.single('file'), async (req, res, next
     let videoUrl = payload.videoUrl?.trim() ?? ''
     let thumbnailUrl = payload.thumbnailUrl?.trim() ?? ''
 
-    if (req.file) {
-      const publicPath = `/uploads/${req.file.filename}`
+    const uploadedFile = pickUploadedFile(req)
+    if (uploadedFile) {
+      const publicPath = `/uploads/${uploadedFile.filename}`
       videoUrl = buildPublicUrl(req, publicPath)
       if (!thumbnailUrl) {
         thumbnailUrl = ''
@@ -147,7 +155,8 @@ router.post('/videos', requireAuth, upload.single('file'), async (req, res, next
   } catch (error) {
     next(error)
   }
-})
+  }
+)
 
 router.delete('/videos/:videoId', requireAuth, async (req, res, next) => {
   try {
@@ -315,6 +324,19 @@ function resolveLocalUploadPath(assetUrl?: string | null): string | null {
     return null
   }
   return resolved
+}
+
+function pickUploadedFile(req: Request): Express.Multer.File | undefined {
+  const maybeFile = (req as Request & { file?: Express.Multer.File }).file
+  if (maybeFile) {
+    return maybeFile
+  }
+  const files = (req as Request & { files?: Record<string, Express.Multer.File[]> | Express.Multer.File[] }).files
+  if (!files) return undefined
+  if (Array.isArray(files)) {
+    return files[0]
+  }
+  return files.file?.[0] ?? files.video?.[0]
 }
 
 export default router

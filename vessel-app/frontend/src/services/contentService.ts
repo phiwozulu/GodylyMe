@@ -1882,7 +1882,8 @@ export const contentService = {
       if (input.description) formData.append('description', input.description)
       if (input.category) formData.append('category', input.category)
       if (input.tags && input.tags.length > 0) formData.append('tags', JSON.stringify(input.tags))
-      formData.append('video', input.file)
+      // Backend expects the uploaded binary on the "file" field name
+      formData.append('file', input.file)
 
       // Generate thumbnail from video
       try {
