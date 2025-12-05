@@ -314,6 +314,8 @@ export default function Profile() {
         setIsFollowing(true)
       }
       if (targetId) {
+        // Small delay to ensure database transaction completes
+        await new Promise(resolve => setTimeout(resolve, 200))
         const stats = await contentService.fetchFollowStats(targetId)
         setFollowStats(stats)
       }
