@@ -877,7 +877,7 @@ export default function Inbox() {
                           disabled={isSending}
                         />
                         <button type="submit" disabled={!draftValue.trim() || isSending}>
-                          {isSending ? 'Sending...' : 'Send'}
+                          <img src="/media/icons/icons8-send-arrow.svg" alt="Send" style={{ width: '20px', height: '20px' }} />
                         </button>
                       </form>
                     </>
